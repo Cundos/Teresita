@@ -2,13 +2,18 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>TERE - Registro de cuidado</title>
+  <title>TERES APP</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Esta versión está lista para desplegar en Vercel.
-       Las llamadas a "/.netlify/functions/*" se redirigen a "/api/*"
-       mediante vercel.json, manteniendo el mismo front. -->
+
+  <!-- Favicon emoji 👵🏻 -->
+  <link
+    rel="icon"
+    type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-size='80'%3E👵🏻%3C/text%3E%3C/svg%3E"
+  >
 
   <style>
+   
     * { box-sizing: border-box; }
 
     body {
@@ -160,6 +165,22 @@
       opacity: 0.8;
     }
 
+    button.export-btn {
+      width: 100%;
+      margin-top: 8px;
+      padding: 8px;
+      border-radius: 999px;
+      border: none;
+      font-size: 0.9rem;
+      background: #e6f0ff;
+      color: #003f8c;
+      cursor: pointer;
+    }
+
+    button.export-btn:active {
+      opacity: 0.85;
+    }
+
     /* Historial */
     .history-list {
       display: flex;
@@ -252,33 +273,59 @@
       font-size: 0.8rem;
     }
 
-    /* Calendario tabla */
-    .schedule-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.8rem;
-      margin-top: 4px;
-      border: 1px solid #ddd;
-    }
+/* Calendario de turnos – versión simple y prolija */
+		.schedule-table {
+		  width: 100%;
+		  border-collapse: collapse;
+		  font-size: 0.8rem;
+		  margin-top: 4px;
+		  border: 1px solid #ddd;
+		}
 
-    .schedule-table th,
-    .schedule-table td {
-      padding: 4px 6px;
-      border: 1px solid #ddd;
-      vertical-align: top;
-    }
+		.schedule-table th,
+		.schedule-table td {
+		  padding: 4px 8px;
+		  border: 1px solid #eee;
+		  vertical-align: top;
+		}
 
-    .schedule-table th {
-      text-align: left;
-      font-weight: 600;
-      background: #f3f3f3;
-    }
+		/* Encabezados */
+		.schedule-table th {
+		  background: #f7f7f7;
+		  font-weight: 600;
+		  text-align: left;
+		}
+
+		/* Columna "Día" más angosta pero sin apretar el texto */
+		.schedule-table td:first-child {
+		  width: 80px;          /* Fijo, no porcentaje raro */
+		  font-weight: 600;
+		  text-align: left;
+		  white-space: nowrap;  /* "Miércoles" no se corta en dos líneas */
+		}
+
+		/* Columna de horarios ocupa el resto, texto alineado a la izquierda */
+		.schedule-table td:last-child {
+		  text-align: left;
+		}
+
+		/* Nombres en negrita suave */
+		.schedule-table td strong {
+		  font-weight: 700;
+		}
+
   </style>
 </head>
 <body>
   <div class="app">
-    <h1>🧓 TERE - Registro de cuidado</h1>
-    <div class="subtitle">Seguimiento diario por turno (comidas, agua, medicación y estado de ánimo)</div>
+    <h1>👵🏻 TERE - Registro de cuidado</h1>
+    <div class="subtitle">
+  <em>
+    Registro diario por turno<br>
+    (comidas, agua, medicación y estado de ánimo)
+  </em>
+</div>
+
 
     <!-- Datos generales -->
     <div class="card">
@@ -299,7 +346,7 @@
         </div>
       </div>
       <div class="row">
-        <label for="cuidador">Cuidador/a</label>
+        <label for="cuidador">Cuidadora</label>
         <select id="cuidador">
           <option value="guadalupe">Guadalupe</option>
           <option value="aylen">Aylén</option>
@@ -315,7 +362,7 @@
     <!-- Comidas -->
     <div class="card">
       <h2>
-        🥗 Comidas del día
+        🍳​ Comidas del día
         <span id="statusComidas" class="status-pill"></span>
       </h2>
       <div class="checkbox-grid">
@@ -421,74 +468,82 @@
 
     <!-- Calendario de turnos -->
     <div class="card">
-      <h2>📋 Calendario de turnos</h2>
+      <h2>🗓️​ Calendario de turnos</h2>
       <div class="small-text">Referencia según el cronograma acordado.</div>
       <table class="schedule-table">
-        <thead>
-          <tr>
-            <th>Día</th>
-            <th>Horarios y cuidadores</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Lunes</td>
-            <td>
-              12:00 a 18:00 — <strong>GUADA</strong><br>
-              20:00 a 08:00 — <strong>NOELIA</strong> (hasta el martes)
-            </td>
-          </tr>
-          <tr>
-            <td>Martes</td>
-            <td>
-              12:00 a 16:00 — <strong>AYLÉN</strong><br>
-              21:00 a 12:00 — <strong>GUADA</strong> (hasta el miércoles)
-            </td>
-          </tr>
-          <tr>
-            <td>Miércoles</td>
-            <td>
-              12:00 a 18:00 — <strong>GUADA</strong><br>
-              20:00 a 08:00 — <strong>NOELIA</strong> (hasta el jueves)
-            </td>
-          </tr>
-          <tr>
-            <td>Jueves</td>
-            <td>
-              12:00 a 16:00 — <strong>AYLÉN</strong><br>
-              20:00 a 08:00 — <strong>NOELIA</strong> (hasta el viernes)
-            </td>
-          </tr>
-          <tr>
-            <td>Viernes</td>
-            <td>
-              09:00 a 18:00 — <strong>GUADA</strong><br>
-              20:00 a 08:00 — <strong>NOELIA</strong> (hasta el sábado)
-            </td>
-          </tr>
-          <tr>
-            <td>Sábado</td>
-            <td>
-              20:00 a 08:00 — <strong>ROCÍO</strong> (hasta el domingo)
-            </td>
-          </tr>
-          <tr>
-            <td>Domingo</td>
-            <td>
-              19:00 a 08:00 — <strong>ROCÍO</strong> (hasta el lunes)
-            </td>
-          </tr>
-        </tbody>
-      </table>
+  <thead>
+    <tr>
+      <th>Día</th>
+      <th>Horarios y cuidadores</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Lunes</td>
+      <td>
+        12:00 a 18:00 — <strong>GUADA</strong><br>
+        20:00 a 08:00 — <strong>NOELIA</strong> <small>(hasta el martes)</small>
+      </td>
+    </tr>
+    <tr>
+      <td>Martes</td>
+      <td>
+        12:00 a 16:00 — <strong>AYLÉN</strong><br>
+        21:00 a 12:00 — <strong>GUADA</strong> <small>(hasta el miércoles)</small>
+      </td>
+    </tr>
+    <tr>
+      <td>Miércoles</td>
+      <td>
+        12:00 a 18:00 — <strong>GUADA</strong><br>
+        20:00 a 08:00 — <strong>NOELIA</strong> <small>(hasta el jueves)</small>
+      </td>
+    </tr>
+    <tr>
+      <td>Jueves</td>
+      <td>
+        12:00 a 16:00 — <strong>AYLÉN</strong><br>
+        20:00 a 08:00 — <strong>NOELIA</strong> <small>(hasta el viernes)</small>
+      </td>
+    </tr>
+    <tr>
+      <td>Viernes</td>
+      <td>
+        09:00 a 18:00 — <strong>GUADA</strong><br>
+        20:00 a 08:00 — <strong>NOELIA</strong> <small>(hasta el sábado)</small>
+      </td>
+    </tr>
+    <tr>
+      <td>Sábado</td>
+      <td>
+        20:00 a 08:00 — <strong>ROCÍO</strong> <small>(hasta el domingo)</small>
+      </td>
+    </tr>
+    <tr>
+      <td>Domingo</td>
+      <td>
+        19:00 a 08:00 — <strong>ROCÍO</strong> <small>(hasta el lunes)</small>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+    </div>
+
+    <!-- Exportar (al fondo) -->
+    <div class="card">
+      <h2>Exportar registros</h2>
+      <button class="export-btn" id="exportDia">⬇️ Exportar día a Excel / Sheets</button>
+      <div class="small-text">Genera un CSV con todos los turnos del día seleccionado.</div>
     </div>
 
     <div class="footer-info">
-      Datos guardados en base central (Neon / DB). Versión beta v8 (Vercel).
+      Developed by Cundo.NET
     </div>
   </div>
 
   <script>
-    const API_BASE = "/.netlify/functions"; // en Vercel se reescribe a /api
+    const API_BASE = "/api";
 
     async function apiGuardar(record) {
       const res = await fetch(API_BASE + "/guardar-registro", {
@@ -496,14 +551,8 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(record)
       });
-      if (!res.ok) {
-        throw new Error("Error al guardar registro");
-      }
-      try {
-        return await res.json();
-      } catch {
-        return {};
-      }
+      if (!res.ok) throw new Error("Error al guardar registro");
+      try { return await res.json(); } catch { return {}; }
     }
 
     async function apiListar(params = {}) {
@@ -514,13 +563,10 @@
         }
       });
       const res = await fetch(url.toString());
-      if (!res.ok) {
-        throw new Error("Error al leer registros");
-      }
+      if (!res.ok) throw new Error("Error al leer registros");
       return await res.json();
     }
 
-    // ---------- ELEMENTOS ----------
     const fechaInput       = document.getElementById("fecha");
     const turnoSelect      = document.getElementById("turno");
     const cuidadorSelect   = document.getElementById("cuidador");
@@ -539,6 +585,7 @@
     const resetDiaBtn      = document.getElementById("resetDia");
     const historialLista   = document.getElementById("historialLista");
     const suggestInfo      = document.getElementById("suggestInfo");
+    const exportDiaBtn     = document.getElementById("exportDia");
 
     const moodOptions      = document.querySelectorAll(".mood-option");
     const moodRadios       = document.querySelectorAll('input[name="estadoAnimo"]');
@@ -603,6 +650,29 @@
         if (minutes >= slot.from && minutes < slot.to) return slot.cuidador;
       }
       return null;
+    }
+
+    function getScheduledCuidadorForFechaTurno(fechaStr, turno) {
+      const base = fechaStr || hoyISO();
+      const fecha = new Date(base + "T12:00:00");
+      const dow = fecha.getDay();
+
+      let minutes;
+      switch (turno) {
+        case "maniana":
+          minutes = 9 * 60;
+          break;
+        case "tarde":
+          minutes = 15 * 60;
+          break;
+        case "noche":
+          minutes = 22 * 60;
+          break;
+        case "completo":
+        default:
+          minutes = 12 * 60;
+      }
+      return getCaregiverFor(dow, minutes);
     }
 
     function guessTurnoFromMinutes(minutes) {
@@ -672,27 +742,6 @@
       saveTimeout = setTimeout(() => { savedMessage.textContent = ""; }, 1500);
     }
 
-    function isEmptyRecord(rec) {
-      const noComidas =
-        !rec.desayuno &&
-        !rec.almuerzo &&
-        !rec.merienda &&
-        !rec.cena;
-      const noMed =
-        !rec.med_maniana &&
-        !rec.med_noche;
-      const noAgua =
-        !rec.agua_vasos ||
-        rec.agua_vasos === 0;
-      const sinNotas =
-        !rec.notas ||
-        rec.notas.trim() === "";
-      const sinAnimo =
-        !rec.estado_animo;
-
-      return noComidas && noMed && noAgua && sinNotas && sinAnimo;
-    }
-
     async function fetchRecordForCurrentKey() {
       const fecha = fechaInput.value || hoyISO();
       const cuidador = cuidadorSelect.value;
@@ -734,8 +783,6 @@
       };
 
       registros.forEach(rec => {
-        if (isEmptyRecord(rec)) return;
-
         result.turnos += 1;
         if (rec.desayuno)      result.desayuno = true;
         if (rec.almuerzo)      result.almuerzo = true;
@@ -873,7 +920,7 @@
           if (!daily.desayuno) faltantes.push("desayuno");
           if (!daily.almuerzo) faltantes.push("almuerzo");
           if (!daily.merienda) faltantes.push("merienda");
-          if (!daily.cena)     faltantes.push("cena");
+          if (!daily.cena) faltantes.push("cena");
           partes.push(`⚠️ Faltan comidas por registrar: ${faltantes.join(", ")}.`);
         }
 
@@ -907,20 +954,27 @@
 
     async function buildHistory() {
       try {
-        const registros = await apiListar({ limite: 20 });
+        const registros = await apiListar({ limite: 100 });
 
         if (!registros || registros.length === 0) {
           historialLista.innerHTML = "<div class='small-text'>Sin registros todavía.</div>";
           return;
         }
 
-        historialLista.innerHTML = "";
-        let visibles = 0;
+        const agrupados = new Map();
 
         registros.forEach(rec => {
-          if (isEmptyRecord(rec)) return;
-          visibles++;
+          const fechaStr = typeof rec.fecha === "string" ? rec.fecha.slice(0, 10) : rec.fecha;
+          const key = `${fechaStr}|${rec.turno}|${rec.cuidador}`;
+          if (!agrupados.has(key)) {
+            agrupados.set(key, rec);
+          }
+        });
 
+        const condensados = Array.from(agrupados.values());
+        historialLista.innerHTML = "";
+
+        condensados.forEach(rec => {
           const fechaStr  = typeof rec.fecha === "string" ? rec.fecha.slice(0, 10) : rec.fecha;
           const comidasCount =
             (rec.desayuno ? 1 : 0) +
@@ -979,10 +1033,6 @@
 
           historialLista.appendChild(item);
         });
-
-        if (visibles === 0) {
-          historialLista.innerHTML = "<div class='small-text'>Sin registros todavía.</div>";
-        }
       } catch (e) {
         console.error(e);
         historialLista.innerHTML = "<div class='small-text'>No se pudo cargar el historial (problema de conexión).</div>";
@@ -993,16 +1043,17 @@
       const hoy = hoyISO();
       fechaInput.value = hoy;
 
-      const { dow, minutes } = getNowInfo();
-      const scheduled = getCaregiverFor(dow, minutes);
+      const { minutes } = getNowInfo();
       const turnoGuess = guessTurnoFromMinutes(minutes);
       turnoSelect.value = turnoGuess;
 
+      const scheduled = getScheduledCuidadorForFechaTurno(hoy, turnoGuess);
+
       if (scheduled) {
         cuidadorSelect.value = scheduled;
-        suggestInfo.textContent = "Cuidador sugerido automáticamente según día y hora actual.";
+        suggestInfo.textContent = "Cuidadora sugerida automáticamente según calendario del turno.";
       } else {
-        suggestInfo.textContent = "Fuera de un turno fijo: seleccionar cuidador manualmente.";
+        suggestInfo.textContent = "Fuera de un turno fijo: seleccionar cuidadora manualmente.";
       }
 
       lastCuidadorValue = cuidadorSelect.value;
@@ -1010,17 +1061,16 @@
 
     async function handleCuidadorChange() {
       const newValue = cuidadorSelect.value;
-      const { dow, minutes } = getNowInfo();
-      const scheduled = getCaregiverFor(dow, minutes);
+      const fechaSel = fechaInput.value || hoyISO();
+      const turnoSel = turnoSelect.value;
 
-      const turnoGuess = guessTurnoFromMinutes(minutes);
-      turnoSelect.value = turnoGuess;
+      const scheduled = getScheduledCuidadorForFechaTurno(fechaSel, turnoSel);
 
-      if (scheduled && newValue !== scheduled) {
+      if (scheduled && newValue !== "otro" && newValue !== scheduled) {
         const nombreProgramado = labelCuidador(scheduled);
         const nombreNuevo      = labelCuidador(newValue);
         const ok = window.confirm(
-          `${nombreNuevo} no está programada para este horario.\n` +
+          `${nombreNuevo} no está programada para este turno.\n` +
           `Según el calendario debería estar ${nombreProgramado}.\n\n` +
           `¿Confirmás que ${nombreNuevo} está cubriendo el turno?`
         );
@@ -1036,7 +1086,6 @@
     }
 
     async function init() {
-      fechaInput.value = hoyISO();
       sugerirTurnoYCuidadorSegunAhora();
       await loadCurrentRecord();
       await buildHistory();
@@ -1075,6 +1124,12 @@
       });
 
       resetDiaBtn.addEventListener("click", () => { resetCurrentRecord(); });
+
+      exportDiaBtn.addEventListener("click", () => {
+        const fecha = fechaInput.value || hoyISO();
+        const url = `${API_BASE}/exportar-csv?fecha=${encodeURIComponent(fecha)}`;
+        window.open(url, "_blank");
+      });
     }
 
     document.addEventListener("DOMContentLoaded", () => {
