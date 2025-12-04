@@ -1,24 +1,29 @@
-// /api/guardar-registro.js
-// Placeholder para Vercel. Acá deberías pegar la lógica que hoy tenés en tu
-// Netlify Function de guardar, adaptando el handler.
-//
-// IMPORTANTE: esto no persiste en ningún lado, sólo eco de prueba.
+import { Pool } from '@neondatabase/serverless';
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
+});
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    res.status(405).json({ error: "Método no permitido" });
-    return;
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  const body = req.body || {};
-  console.log("Guardar registro (demo, sin DB):", body);
-
-  // Acá iría tu insert en Neon / Postgres usando DATABASE_URL, etc.
-  // Ejemplo (pseudo):
-  // const client = new Client({ connectionString: process.env.DATABASE_URL });
-  // await client.connect();
-  // await client.query("INSERT INTO ...", [...]);
-  // await client.end();
-
-  res.status(200).json({ ok: true, demo: true });
+  const data = req.body || {};
+  try {
+    // Insert the record into the database. Adjust table and columns according to your schema.
+    // Here we assume there is a table `registros` with a jsonb column `data`.
+    const result = await pool.query(
+      'INSERT INTO registros(data) VALUES ($1) RETURNING id',
+      [data]
+    );
+    const id = result.rows[0]?.id;
+    res.status(200).json({ ok: true, id });
+  } catch (error) {
+    console.error('Error saving record:', error);
+    res.status(500).json({ error: 'Error al guardar el registro' });
+  }
 }
