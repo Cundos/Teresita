@@ -1,7 +1,7 @@
 // api/exportar-csv.js
-import { getPool } from "./db.js";
+const { getPool } = require("./db.js");
 
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Método no permitido" });
   }
@@ -50,7 +50,7 @@ export default async function handler(req, res) {
       "estado_animo",
       "notas",
       "created_at",
-      "updated_at",
+      "updated_at"
     ];
 
     const esc = (val) => {
@@ -63,22 +63,29 @@ export default async function handler(req, res) {
     lines.push(header.join(","));
 
     for (const r of rows) {
-      lines.push([
-        r.fecha?.toISOString?.().slice(0, 10) || r.fecha,
-        r.turno,
-        r.cuidador,
-        r.desayuno,
-        r.almuerzo,
-        r.merienda,
-        r.cena,
-        r.agua_vasos,
-        r.med_maniana,
-        r.med_noche,
-        r.estado_animo,
-        r.notas,
-        r.created_at,
-        r.updated_at,
-      ].map(esc).join(","));
+      const fechaStr =
+        r.fecha && typeof r.fecha.toISOString === "function"
+          ? r.fecha.toISOString().slice(0, 10)
+          : r.fecha;
+
+      lines.push(
+        [
+          fechaStr,
+          r.turno,
+          r.cuidador,
+          r.desayuno,
+          r.almuerzo,
+          r.merienda,
+          r.cena,
+          r.agua_vasos,
+          r.med_maniana,
+          r.med_noche,
+          r.estado_animo,
+          r.notas,
+          r.created_at,
+          r.updated_at
+        ].map(esc).join(",")
+      );
     }
 
     const csv = lines.join("\r\n");
@@ -93,4 +100,4 @@ export default async function handler(req, res) {
     console.error("Error en exportar-csv:", err);
     return res.status(500).json({ error: "Error interno al exportar" });
   }
-}
+};
