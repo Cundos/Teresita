@@ -1,7 +1,7 @@
 // api/listar-registros.js
-import { getPool } from "./db.js";
+const { getPool } = require("./db.js");
 
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Método no permitido" });
   }
@@ -28,7 +28,6 @@ export default async function handler(req, res) {
     }
 
     const whereClause = where.length ? `WHERE ${where.join(" AND ")}` : "";
-
     const limitNum = Number.isFinite(+limite) ? parseInt(limite, 10) : 50;
 
     const query = `
@@ -60,4 +59,4 @@ export default async function handler(req, res) {
     console.error("Error en listar-registros:", err);
     return res.status(500).json({ error: "Error interno al listar" });
   }
-}
+};
