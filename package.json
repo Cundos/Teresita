@@ -1,7 +1,6 @@
 {
-  "name": "Teresita",
-  "version": "1.0.0",
+  "type": "module",
   "dependencies": {
-    "@neondatabase/serverless": "^0.4.4"
+    "@vercel/postgres": "^0.5.0"
   }
 }
