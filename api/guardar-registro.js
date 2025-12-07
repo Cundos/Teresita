@@ -2,7 +2,7 @@ import { Pool } from '@neondatabase/serverless';
 
 // Usamos el nombre de la variable que pegaste: POSTGRES_URL
 const pool = new Pool({
-  connectionString: process.env.POSTGRES_URL,
+  connectionString: process.env.POSTGRES_URL, 
 });
 
 export default async function handler(request, response) {
@@ -13,6 +13,7 @@ export default async function handler(request, response) {
   try {
     const d = request.body;
     
+    // El SQL se adapta a tu tabla registros
     const queryText = `
       INSERT INTO registros (
         fecha, turno, cuidador, 
