@@ -593,7 +593,15 @@
     let saveTimeout = null;
     let lastCuidadorValue = cuidadorSelect.value;
 
-    const schedule = {
+ 
+async function apiBorrar(id) {
+  const url = new URL(API_BASE + "/borrar-registro", window.location.origin);
+  url.searchParams.set("id", id);
+  const res = await fetch(url.toString(), { method: "POST" });
+  if (!res.ok) throw new Error("Error al borrar registro");
+  return await res.json();
+}
+   const schedule = {
       1: [
         { from: 0,        to: 8 * 60,  cuidador: "rocio"     },
         { from: 12 * 60,  to: 18 * 60, cuidador: "guadalupe" },
@@ -1019,6 +1027,21 @@
 
           item.appendChild(main);
           item.appendChild(summary);
+			  // Botón de borrado
+  const deleteBtn = document.createElement("button");
+  deleteBtn.className = "delete-button";
+  deleteBtn.textContent = "Borrar";
+  deleteBtn.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    try {
+      await apiBorrar(rec.id);
+      await buildHistory();
+    } catch (err) {
+      console.error(err);
+    }
+  });
+  item.appendChild(deleteBtn);
+
           item.appendChild(meta);
 
           item.addEventListener("click", () => {
@@ -1138,3 +1161,4 @@
   </script>
 </body>
 </html>
+
