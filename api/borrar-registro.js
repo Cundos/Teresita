@@ -1,30 +1,27 @@
-import { Pool } from '@neondatabase/serverless';
+import { sql } from '@vercel/postgres';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-  },
-});
-
-export default async function handler(req, res) {
-  if (req.method !== 'DELETE' && req.method !== 'POST') {
-    return res.status(405).json({ error: 'Método no permitido' });
-  }
-
-  const id = req.query.id || (req.body && req.body.id);
-  if (!id) {
-    return res.status(400).json({ error: 'ID es requerido' });
-  }
-
+export default async function handler(request, response) {
   try {
-    const result = await pool.query('DELETE FROM registros WHERE id = $1', [id]);
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: 'Registro no encontrado' });
+    if (request.method !== 'DELETE' && request.method !== 'POST') {
+      return response.status(405).json({ error: 'Método no permitido' });
     }
-    return res.status(200).json({ ok: true });
-  } catch (err) {
-    console.error('Error deleting record:', err);
-    return res.status(500).json({ error: 'Error deleting record' });
+
+    const id = request.query.id || (request.body && request.body.id);
+    
+    if (!id) {
+      return response.status(400).json({ error: 'ID es requerido' });
+    }
+
+    // Ejecutamos el borrado usando la librería nueva
+    const result = await sql`DELETE FROM registros WHERE id = ${id}`;
+
+    if (result.rowCount === 0) {
+      return response.status(404).json({ error: 'Registro no encontrado' });
+    }
+    
+    return response.status(200).json({ ok: true });
+  } catch (error) {
+    console.error('Error deleting:', error);
+    return response.status(500).json({ error: error.message });
   }
 }
