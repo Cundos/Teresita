@@ -1,46 +1,63 @@
-import { Pool } from '@neondatabase/serverless';
+// api/listar-registros.js
+import { getPool } from "./db.js";
 
-// Usamos el nombre de la variable que pegaste: POSTGRES_URL
-const pool = new Pool({
-  connectionString: process.env.POSTGRES_URL, 
-});
-
-export default async function handler(request, response) {
-  response.setHeader('Cache-Control', 'no-store, max-age=0');
-  
-  if (request.method !== 'GET') {
-    return response.status(405).json({ error: 'Método no permitido' });
+export default async function handler(req, res) {
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Método no permitido" });
   }
 
   try {
-    const { searchParams } = new URL(request.url, `http://${request.headers.host}`);
-    const fecha = searchParams.get('fecha');
-    const limite = searchParams.get('limite');
+    const { fecha, cuidador, turno, limite } = req.query;
 
-    let query = 'SELECT * FROM registros';
+    const pool = getPool();
+    const where = [];
     const values = [];
-    const conditions = [];
+    let idx = 1;
 
     if (fecha) {
-      conditions.push(`fecha = $${values.length + 1}`);
+      where.push(`fecha = $${idx++}`);
       values.push(fecha);
     }
-    
-    if (conditions.length > 0) {
-      query += ' WHERE ' + conditions.join(' AND ');
+    if (cuidador) {
+      where.push(`cuidador = $${idx++}`);
+      values.push(cuidador);
+    }
+    if (turno) {
+      where.push(`turno = $${idx++}`);
+      values.push(turno);
     }
 
-    query += ' ORDER BY fecha DESC, created_at DESC';
+    const whereClause = where.length ? `WHERE ${where.join(" AND ")}` : "";
 
-    if (limite) {
-      query += ` LIMIT ${parseInt(limite)}`;
-    }
+    const limitNum = Number.isFinite(+limite) ? parseInt(limite, 10) : 50;
 
-    const result = await pool.query(query, values);
+    const query = `
+      SELECT
+        id,
+        fecha,
+        turno,
+        cuidador,
+        desayuno,
+        almuerzo,
+        merienda,
+        cena,
+        agua_vasos,
+        med_maniana,
+        med_noche,
+        notas,
+        estado_animo,
+        created_at,
+        updated_at
+      FROM registros_cuidado
+      ${whereClause}
+      ORDER BY fecha DESC, created_at DESC
+      LIMIT ${limitNum};
+    `;
 
-    return response.status(200).json(result.rows);
-  } catch (error) {
-    console.error("Error leyendo:", error);
-    return response.status(500).json({ error: 'Error interno del servidor.' });
+    const { rows } = await pool.query(query, values);
+    return res.status(200).json(rows);
+  } catch (err) {
+    console.error("Error en listar-registros:", err);
+    return res.status(500).json({ error: "Error interno al listar" });
   }
 }
