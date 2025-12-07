@@ -1,16 +1,16 @@
 // api/guardar-registro.js
-import { getPool } from "./db.js";
+const { getPool } = require("./db.js");
 
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Método no permitido" });
   }
 
   try {
     const {
-      fecha,          // "YYYY-MM-DD"
-      turno,          // maniana | tarde | noche | completo
-      cuidador,       // guadalupe | aylen | noelia | rocio | otro
+      fecha,
+      turno,
+      cuidador,
       desayuno,
       almuerzo,
       merienda,
@@ -19,7 +19,7 @@ export default async function handler(req, res) {
       medManiana,
       medNoche,
       notas,
-      estadoAnimo,
+      estadoAnimo
     } = req.body || {};
 
     if (!fecha || !turno || !cuidador) {
@@ -70,7 +70,7 @@ export default async function handler(req, res) {
       !!medManiana,
       !!medNoche,
       notas ?? "",
-      estadoAnimo ?? null,
+      estadoAnimo ?? null
     ];
 
     const { rows } = await pool.query(query, values);
@@ -79,4 +79,4 @@ export default async function handler(req, res) {
     console.error("Error en guardar-registro:", err);
     return res.status(500).json({ error: "Error interno al guardar" });
   }
-}
+};
