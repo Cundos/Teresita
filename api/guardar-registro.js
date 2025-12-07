@@ -1,42 +1,49 @@
-import { sql } from '@vercel/postgres';
+import { Pool } from '@neondatabase/serverless';
+
+// Usamos el nombre de la variable que pegaste en Vercel
+const pool = new Pool({
+  connectionString: process.env.POSTGRES_URL,
+});
 
 export default async function handler(request, response) {
+  if (request.method !== 'POST') {
+    return response.status(405).json({ error: 'Solo se permite POST' });
+  }
+
   try {
-    // 1. Verificamos que sea un envío de datos (POST)
-    if (request.method !== 'POST') {
-      return response.status(405).json({ error: 'Solo se permite POST' });
-    }
-
     const d = request.body;
-
-    // 2. Insertamos los datos en sus columnas correspondientes.
-    // La parte "ON CONFLICT" es la magia: si ya existe un registro para esa FECHA+TURNO+CUIDADORA,
-    // en lugar de dar error o duplicar, ACTUALIZA los valores.
-    await sql`
+    
+    const queryText = `
       INSERT INTO registros (
         fecha, turno, cuidador, 
         desayuno, almuerzo, merienda, cena, 
         agua_vasos, med_maniana, med_noche, 
         estado_animo, notas
       ) VALUES (
-        ${d.fecha}, ${d.turno}, ${d.cuidador},
-        ${d.desayuno}, ${d.almuerzo}, ${d.merienda}, ${d.cena},
-        ${d.aguaVasos}, ${d.medManiana}, ${d.medNoche},
-        ${d.estadoAnimo}, ${d.notas}
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
       )
       ON CONFLICT (fecha, turno, cuidador) 
       DO UPDATE SET 
-        desayuno = EXCLUDED.desayuno,
-        almuerzo = EXCLUDED.almuerzo,
-        merienda = EXCLUDED.merienda,
-        cena = EXCLUDED.cena,
-        agua_vasos = EXCLUDED.agua_vasos,
-        med_maniana = EXCLUDED.med_maniana,
-        med_noche = EXCLUDED.med_noche,
-        estado_animo = EXCLUDED.estado_animo,
-        notas = EXCLUDED.notas,
-        updated_at = NOW();
+        desayuno = $4,
+        almuerzo = $5,
+        merienda = $6,
+        cena = $7,
+        agua_vasos = $8,
+        med_maniana = $9,
+        med_noche = $10,
+        estado_animo = $11,
+        notas = $12,
+        updated_at = NOW()
     `;
+
+    const values = [
+      d.fecha, d.turno, d.cuidador,
+      d.desayuno, d.almuerzo, d.merienda, d.cena,
+      parseInt(d.aguaVasos || "0", 10), d.medManiana, d.medNoche,
+      d.estadoAnimo, d.notas
+    ];
+
+    await pool.query(queryText, values);
 
     return response.status(200).json({ success: true });
   } catch (error) {
