@@ -1,53 +1,46 @@
-import { Pool } from '@neondatabase/serverless';
+import { sql } from '@vercel/postgres';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
-});
-
-export default async function handler(req, res) {
-  // Only allow POST requests
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Método no permitido' });
-  }
-
-  // Ensure request body exists
-  const body = req.body || {};
-
-  // Map front-end camelCase fields to snake_case for the database
-  const data = {
-    fecha: body.fecha,
-    turno: body.turno,
-    cuidador: body.cuidador,
-    desayuno: !!body.desayuno,
-    almuerzo: !!body.almuerzo,
-    merienda: !!body.merienda,
-    cena: !!body.cena,
-    agua_vasos: parseInt(body.aguaVasos ?? 0, 10),
-    med_maniana: !!body.medManiana,
-    med_noche: !!body.medNoche,
-    notas: body.notas || '',
-    estado_animo: body.estadoAnimo || '',
-  };
-
+export default async function handler(request, response) {
   try {
-    // Ensure the table exists. It holds a JSONB payload and a timestamp.
-    await pool.query(`CREATE TABLE IF NOT EXISTS registros (
-      id SERIAL PRIMARY KEY,
-      data JSONB NOT NULL,
-      created_at TIMESTAMPTZ DEFAULT NOW()
-    )`);
+    // 1. Verificamos que sea un envío de datos (POST)
+    if (request.method !== 'POST') {
+      return response.status(405).json({ error: 'Solo se permite POST' });
+    }
 
-    // Insert the transformed data into the database
-    const result = await pool.query(
-      'INSERT INTO registros(data) VALUES ($1) RETURNING id',
-      [data]
-    );
+    const d = request.body;
 
-    const id = result.rows[0]?.id;
-    return res.status(200).json({ ok: true, id });
+    // 2. Insertamos los datos en sus columnas correspondientes.
+    // La parte "ON CONFLICT" es la magia: si ya existe un registro para esa FECHA+TURNO+CUIDADORA,
+    // en lugar de dar error o duplicar, ACTUALIZA los valores.
+    await sql`
+      INSERT INTO registros (
+        fecha, turno, cuidador, 
+        desayuno, almuerzo, merienda, cena, 
+        agua_vasos, med_maniana, med_noche, 
+        estado_animo, notas
+      ) VALUES (
+        ${d.fecha}, ${d.turno}, ${d.cuidador},
+        ${d.desayuno}, ${d.almuerzo}, ${d.merienda}, ${d.cena},
+        ${d.aguaVasos}, ${d.medManiana}, ${d.medNoche},
+        ${d.estadoAnimo}, ${d.notas}
+      )
+      ON CONFLICT (fecha, turno, cuidador) 
+      DO UPDATE SET 
+        desayuno = EXCLUDED.desayuno,
+        almuerzo = EXCLUDED.almuerzo,
+        merienda = EXCLUDED.merienda,
+        cena = EXCLUDED.cena,
+        agua_vasos = EXCLUDED.agua_vasos,
+        med_maniana = EXCLUDED.med_maniana,
+        med_noche = EXCLUDED.med_noche,
+        estado_animo = EXCLUDED.estado_animo,
+        notas = EXCLUDED.notas,
+        updated_at = NOW();
+    `;
+
+    return response.status(200).json({ success: true });
   } catch (error) {
-    console.error('Error saving record:', error);
-    return res.status(500).json({ error: 'Error al guardar el registro' });
+    console.error("Error guardando:", error);
+    return response.status(500).json({ error: error.message });
   }
 }
