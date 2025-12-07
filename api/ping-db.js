@@ -1,20 +1,17 @@
 // api/ping-db.js
-const { getPool } = require("./db.js");
-
 module.exports = async (req, res) => {
-  try {
-    const pool = getPool();
-    const { rows } = await pool.query("SELECT now() as ahora, version()");
-    return res.status(200).json({
-      ok: true,
-      ahora: rows[0].ahora,
-      version: rows[0].version
-    });
-  } catch (err) {
-    console.error("Error en ping-db:", err);
-    return res.status(500).json({
-      ok: false,
-      error: err.message
-    });
-  }
+  const envKeys = Object.keys(process.env).filter((k) =>
+    k.toUpperCase().includes("DB") ||
+    k.toUpperCase().includes("DATABASE") ||
+    k.toUpperCase().includes("NEON")
+  );
+
+  return res.status(200).json({
+    ok: true,
+    hasDatabaseUrl: !!process.env.DATABASE_URL,
+    databaseUrlPreview: process.env.DATABASE_URL
+      ? process.env.DATABASE_URL.slice(0, 60) + "..."
+      : null,
+    envKeys
+  });
 };
