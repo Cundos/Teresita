@@ -1,6 +1,6 @@
 import { Pool } from '@neondatabase/serverless';
 
-// Usamos el nombre de la variable que pegaste en Vercel
+// Usamos el nombre de la variable que pegaste: POSTGRES_URL
 const pool = new Pool({
   connectionString: process.env.POSTGRES_URL,
 });
@@ -48,6 +48,6 @@ export default async function handler(request, response) {
     return response.status(200).json({ success: true });
   } catch (error) {
     console.error("Error guardando:", error);
-    return response.status(500).json({ error: error.message });
+    return response.status(500).json({ error: 'Error interno del servidor.' });
   }
 }
