@@ -1,54 +1,82 @@
-import { Pool } from '@neondatabase/serverless';
+// api/guardar-registro.js
+import { getPool } from "./db.js";
 
-// Usamos el nombre de la variable que pegaste: POSTGRES_URL
-const pool = new Pool({
-  connectionString: process.env.POSTGRES_URL, 
-});
-
-export default async function handler(request, response) {
-  if (request.method !== 'POST') {
-    return response.status(405).json({ error: 'Solo se permite POST' });
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Método no permitido" });
   }
 
   try {
-    const d = request.body;
-    
-    // El SQL se adapta a tu tabla registros
-    const queryText = `
-      INSERT INTO registros (
-        fecha, turno, cuidador, 
-        desayuno, almuerzo, merienda, cena, 
-        agua_vasos, med_maniana, med_noche, 
-        estado_animo, notas
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+    const {
+      fecha,          // "YYYY-MM-DD"
+      turno,          // maniana | tarde | noche | completo
+      cuidador,       // guadalupe | aylen | noelia | rocio | otro
+      desayuno,
+      almuerzo,
+      merienda,
+      cena,
+      aguaVasos,
+      medManiana,
+      medNoche,
+      notas,
+      estadoAnimo,
+    } = req.body || {};
+
+    if (!fecha || !turno || !cuidador) {
+      return res.status(400).json({ error: "Faltan campos obligatorios" });
+    }
+
+    const pool = getPool();
+
+    const query = `
+      INSERT INTO registros_cuidado (
+        fecha, turno, cuidador,
+        desayuno, almuerzo, merienda, cena,
+        agua_vasos, med_maniana, med_noche,
+        notas, estado_animo,
+        updated_at
       )
-      ON CONFLICT (fecha, turno, cuidador) 
-      DO UPDATE SET 
-        desayuno = $4,
-        almuerzo = $5,
-        merienda = $6,
-        cena = $7,
-        agua_vasos = $8,
-        med_maniana = $9,
-        med_noche = $10,
-        estado_animo = $11,
-        notas = $12,
-        updated_at = NOW()
+      VALUES (
+        $1, $2, $3,
+        $4, $5, $6, $7,
+        $8, $9, $10,
+        $11, $12,
+        now()
+      )
+      ON CONFLICT (fecha, turno, cuidador)
+      DO UPDATE SET
+        desayuno     = EXCLUDED.desayuno,
+        almuerzo     = EXCLUDED.almuerzo,
+        merienda     = EXCLUDED.merienda,
+        cena         = EXCLUDED.cena,
+        agua_vasos   = EXCLUDED.agua_vasos,
+        med_maniana  = EXCLUDED.med_maniana,
+        med_noche    = EXCLUDED.med_noche,
+        notas        = EXCLUDED.notas,
+        estado_animo = EXCLUDED.estado_animo,
+        updated_at   = now()
+      RETURNING *;
     `;
 
     const values = [
-      d.fecha, d.turno, d.cuidador,
-      d.desayuno, d.almuerzo, d.merienda, d.cena,
-      parseInt(d.aguaVasos || "0", 10), d.medManiana, d.medNoche,
-      d.estadoAnimo, d.notas
+      fecha,
+      turno,
+      cuidador,
+      !!desayuno,
+      !!almuerzo,
+      !!merienda,
+      !!cena,
+      Number.isFinite(+aguaVasos) ? parseInt(aguaVasos, 10) : 0,
+      !!medManiana,
+      !!medNoche,
+      notas ?? "",
+      estadoAnimo ?? null,
     ];
 
-    await pool.query(queryText, values);
-
-    return response.status(200).json({ success: true });
-  } catch (error) {
-    console.error("Error guardando:", error);
-    return response.status(500).json({ error: 'Error interno del servidor.' });
+    const { rows } = await pool.query(query, values);
+    return res.status(200).json(rows[0]);
+  } catch (err) {
+    console.error("Error en guardar-registro:", err);
+    return res.status(500).json({ error: "Error interno al guardar" });
   }
 }
