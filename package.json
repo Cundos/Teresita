@@ -1,5 +1,9 @@
 {
+  "scripts": {
+    "build": "echo \"Building API dependencies...\"" 
+  },
   "dependencies": {
-    "@neondatabase/serverless": "0.7.0"
+    "@vercel/postgres": "0.7.2",
+    "pg": "8.11.3" 
   }
 }
