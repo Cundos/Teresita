@@ -1,5 +1,12 @@
 {
+  "name": "teresita-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev",
+    "start": "vercel dev"
+  },
   "dependencies": {
-    "@neondatabase/serverless": "0.7.0"
+    "pg": "^8.13.0"
   }
 }
