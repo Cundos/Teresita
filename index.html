@@ -399,6 +399,28 @@
     .schedule-table td strong {
       font-weight: 700;
     }
+
+    /* Tabla dashboard */
+    .dash-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+      margin-top: 4px;
+      border: 1px solid #ddd;
+    }
+
+    .dash-table th,
+    .dash-table td {
+      padding: 4px 6px;
+      border: 1px solid #eee;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .dash-table th {
+      background: #f7f7f7;
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
@@ -546,7 +568,7 @@
       <div id="resumenTexto" class="small-text"></div>
     </div>
 
-        <!-- Dashboard resumido -->
+    <!-- Dashboard resumido -->
     <div class="card">
       <h2>📊 Resumen de período</h2>
       <div class="two-cols">
@@ -568,7 +590,6 @@
       <div id="dashTabla" class="small-text" style="margin-top:8px; overflow-x:auto;"></div>
     </div>
 
-    
     <!-- Historial -->
     <div class="card">
       <h2>Historial reciente</h2>
@@ -719,6 +740,12 @@
     const turnoInfo        = document.getElementById("turnoInfo");
     const exportDiaBtn     = document.getElementById("exportDia");
     const currentDateLabel = document.getElementById("currentDateLabel");
+
+    const dashDesdeInput   = document.getElementById("dashDesde");
+    const dashHastaInput   = document.getElementById("dashHasta");
+    const dashActualizarBtn= document.getElementById("dashActualizar");
+    const dashIndicadores  = document.getElementById("dashIndicadores");
+    const dashTabla        = document.getElementById("dashTabla");
 
     const moodOptions      = document.querySelectorAll(".mood-option");
     const moodRadios       = document.querySelectorAll('input[name="estadoAnimo"]');
@@ -1325,6 +1352,215 @@
       }
     }
 
+    // Helpers dashboard
+    function diasEntre(desdeStr, hastaStr) {
+      const dias = [];
+      const desde = new Date(desdeStr + "T00:00:00");
+      const hasta = new Date(hastaStr + "T00:00:00");
+      for (
+        let d = new Date(desde);
+        d <= hasta;
+        d.setDate(d.getDate() + 1)
+      ) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+        dias.push(`${y}-${m}-${dd}`);
+      }
+      return dias;
+    }
+
+    function calcularResumenDiaDesdeRegistros(registros) {
+      const resumen = {
+        desayuno: false,
+        almuerzo: false,
+        merienda: false,
+        cena: false,
+        medManiana: false,
+        medNoche: false,
+        aguaVasos: 0,
+        estados: {},
+      };
+
+      registros.forEach(rec => {
+        if (rec.desayuno)    resumen.desayuno = true;
+        if (rec.almuerzo)    resumen.almuerzo = true;
+        if (rec.merienda)    resumen.merienda = true;
+        if (rec.cena)        resumen.cena = true;
+        if (rec.med_maniana) resumen.medManiana = true;
+        if (rec.med_noche)   resumen.medNoche = true;
+
+        const agua = rec.agua_vasos || 0;
+        if (agua > resumen.aguaVasos) resumen.aguaVasos = agua;
+
+        const ea = rec.estado_animo || "";
+        if (ea) {
+          resumen.estados[ea] = (resumen.estados[ea] || 0) + 1;
+        }
+      });
+
+      // estado de ánimo predominante
+      let mood = "";
+      let maxCount = 0;
+      Object.entries(resumen.estados).forEach(([k, v]) => {
+        if (v > maxCount) {
+          maxCount = v;
+          mood = k;
+        }
+      });
+
+      return { ...resumen, mood };
+    }
+
+    async function cargarDashboard() {
+      const hoy = hoyISO();
+      const desde = dashDesdeInput.value || hoy;
+      const hasta = dashHastaInput.value || desde;
+
+      if (hasta < desde) {
+        alert("La fecha 'Hasta' no puede ser menor que 'Desde'.");
+        return;
+      }
+
+      dashIndicadores.textContent = "Cargando resumen...";
+      dashTabla.innerHTML = "";
+
+      const dias = diasEntre(desde, hasta);
+
+      const porDia = new Map();
+
+      for (const dia of dias) {
+        try {
+          const regs = await apiListar({ fecha: dia });
+          if (regs && regs.length > 0) {
+            porDia.set(dia, regs);
+          } else {
+            porDia.set(dia, []);
+          }
+        } catch (e) {
+          console.error("Error cargando día", dia, e);
+          porDia.set(dia, []);
+        }
+      }
+
+      const fechasOrdenadas = Array.from(porDia.keys()).sort();
+
+      if (fechasOrdenadas.length === 0) {
+        dashIndicadores.textContent = "No hay datos para el rango seleccionado.";
+        dashTabla.innerHTML = "";
+        return;
+      }
+
+      let diasConDatos = 0;
+      let diasCompletos = 0;
+      let sumaAgua = 0;
+      let diasConAgua = 0;
+      let diasMedCompleta = 0;
+
+      const filasTabla = [];
+
+      fechasOrdenadas.forEach(fechaStr => {
+        const regs = porDia.get(fechaStr) || [];
+        if (regs.length === 0) {
+          const fila = `
+            <tr>
+              <td>${formatFecha(fechaStr)}</td>
+              <td>0/4</td>
+              <td>0/2</td>
+              <td>0</td>
+              <td>-</td>
+            </tr>
+          `;
+          filasTabla.push(fila);
+          return;
+        }
+
+        diasConDatos++;
+
+        const resumen = calcularResumenDiaDesdeRegistros(regs);
+
+        const comidasCount = [
+          resumen.desayuno,
+          resumen.almuerzo,
+          resumen.merienda,
+          resumen.cena,
+        ].filter(Boolean).length;
+
+        const medCount = [
+          resumen.medManiana,
+          resumen.medNoche,
+        ].filter(Boolean).length;
+
+        const diaCompleto =
+          resumen.desayuno &&
+          resumen.almuerzo &&
+          resumen.merienda &&
+          resumen.cena &&
+          resumen.medManiana &&
+          resumen.medNoche &&
+          resumen.aguaVasos > 0;
+
+        if (diaCompleto) diasCompletos++;
+
+        const agua = resumen.aguaVasos || 0;
+        if (agua > 0) {
+          sumaAgua += agua;
+          diasConAgua++;
+        }
+
+        if (resumen.medManiana && resumen.medNoche) {
+          diasMedCompleta++;
+        }
+
+        const moodIcon = moodEmoji(resumen.mood);
+
+        const fila = `
+          <tr>
+            <td>${formatFecha(fechaStr)}</td>
+            <td>${comidasCount}/4</td>
+            <td>${medCount}/2</td>
+            <td>${agua}</td>
+            <td>${moodIcon || "-"}</td>
+          </tr>
+        `;
+        filasTabla.push(fila);
+      });
+
+      const totalDias = fechasOrdenadas.length;
+      const porcentajeCompletos =
+        totalDias > 0 ? ((diasCompletos / totalDias) * 100).toFixed(1) : "0.0";
+      const promedioAgua =
+        diasConAgua > 0 ? (sumaAgua / diasConAgua).toFixed(1) : "0.0";
+      const porcentajeMedCompleta =
+        diasConDatos > 0
+          ? ((diasMedCompleta / diasConDatos) * 100).toFixed(1)
+          : "0.0";
+
+      dashIndicadores.textContent =
+        `Días con datos: ${diasConDatos}/${totalDias}. ` +
+        `Días completos: ${diasCompletos} (${porcentajeCompletos}%). ` +
+        `Promedio de agua (solo días con registro de agua): ${promedioAgua} vaso(s). ` +
+        `Días con medicación completa: ${diasMedCompleta} (${porcentajeMedCompleta}%).`;
+
+      const tablaHTML = `
+        <table class="dash-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Comidas</th>
+              <th>Medicación</th>
+              <th>Agua</th>
+              <th>Ánimo</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filasTabla.join("")}
+          </tbody>
+        </table>
+      `;
+      dashTabla.innerHTML = tablaHTML;
+    }
+
     function sugerirTurnoYCuidadorSegunAhora() {
       const hoy = hoyISO();
       fechaInput.value = hoy;
@@ -1408,7 +1644,6 @@
       const hoyStr = hoyISO();
       fechaInput.max = hoyStr;
 
-      // Etiqueta "Hoy: dd/mm/aaaa"
       currentDateLabel.textContent = "Hoy: " + formatFecha(hoyStr);
 
       sugerirTurnoYCuidadorSegunAhora();
@@ -1465,6 +1700,17 @@
         const url = `${API_BASE}/exportar-csv?fecha=${encodeURIComponent(fecha)}`;
         window.open(url, "_blank");
       });
+
+      // Dashboard: valores por defecto y botón
+      if (dashDesdeInput && dashHastaInput && dashActualizarBtn) {
+        const hoy = hoyISO();
+        dashDesdeInput.value = hoy;
+        dashHastaInput.value = hoy;
+
+        dashActualizarBtn.addEventListener("click", () => {
+          cargarDashboard();
+        });
+      }
     }
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -1473,4 +1719,3 @@
   </script>
 </body>
 </html>
-
