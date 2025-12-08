@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>TERESITAPP</title>
+  <title>TERE - Registro de cuidado</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Favicon emoji 👵🏻 -->
@@ -45,7 +45,7 @@
       text-align: center;
       font-size: 0.8rem;
       color: #777;
-      margin-bottom: 12px;
+      margin-bottom: 4px;
     }
 
     .card {
@@ -223,6 +223,7 @@
       background: #fafafa;
       font-size: 0.8rem;
       position: relative;
+      cursor: pointer;
     }
 
     .history-item-main {
@@ -408,6 +409,14 @@
     .lista-btn-small:active {
       opacity: 0.8;
     }
+
+    /* Banner modo familia */
+    #familyBanner {
+      font-size: 0.8rem;
+      text-align: center;
+      margin-bottom: 6px;
+      color: #8a4b00;
+    }
   </style>
 </head>
 <body>
@@ -420,6 +429,24 @@
       </em>
     </div>
     <div class="today-label" id="currentDateLabel"></div>
+
+    <!-- Banner modo familia (solo lectura) -->
+    <div class="today-label" id="familyBanner" style="display:none;">
+      🔒 Modo familia: solo lectura (no se pueden editar datos ni borrar turnos).
+    </div>
+
+    <!-- Botón para cambiar de modo -->
+    <div style="text-align:center; margin-bottom:8px;">
+      <button id="toggleModoBtn" class="small-chip secondary">
+        👪 Modo familia
+      </button>
+    </div>
+
+    <!-- Alertas inteligentes del día -->
+    <div class="card" id="alertasCard" style="display:none;">
+      <h2>⚠️ Alertas de hoy</h2>
+      <div id="alertasTexto" class="small-text"></div>
+    </div>
 
     <!-- Datos del turno + pestaña Lista -->
     <div class="card">
@@ -497,6 +524,9 @@
 
         <div class="small-text" style="margin-top:8px;">Pendientes:</div>
         <div id="listaPendientes" class="small-text" style="margin-top:4px;"></div>
+
+        <div class="small-text" style="margin-top:8px;">Comprado recientemente:</div>
+        <div id="listaComprados" class="small-text" style="margin-top:4px;"></div>
       </div>
     </div>
 
@@ -529,7 +559,7 @@
 
     <!-- Agua -->
     <div class="card">
-      <h2>💧 Agua (por turno)</h2>
+      <h2>💧 Agua (día completo)</h2>
       <div class="row">
         <label for="aguaVasos">Vasos tomados en el día</label>
         <input type="number" id="aguaVasos" min="0" max="40" step="1" inputmode="numeric" />
@@ -685,8 +715,19 @@
 
   <script>
     const API_BASE = "/api";
-    const DELETE_PIN = "2905";
 
+    // PIN único para acciones sensibles (borrar turnos / salir de modo familia)
+    const DELETE_PIN = "1955";
+    const VIEW_PIN = "1955";
+
+    // Estado global
+    let saveTimeout = null;
+    let listaComprasData = [];
+    let ultimoDailySummary = null;
+    let isFamilyView = false; // modo familia = solo lectura
+    let lastCuidadorValue;
+
+    // --- Funciones de API registros de cuidado ---
     async function apiGuardar(record) {
       const res = await fetch(API_BASE + "/guardar-registro", {
         method: "POST",
@@ -721,7 +762,7 @@
       return await res.json();
     }
 
-    /* API lista de compras */
+    // --- API lista de compras ---
     async function apiComprasListar() {
       const url = new URL(API_BASE + "/compras-listar", window.location.origin);
       const res = await fetch(url.toString());
@@ -749,8 +790,10 @@
       return await res.json();
     }
 
-    /* DOM refs */
+    // --- Referencias DOM ---
     const currentDateLabel = document.getElementById("currentDateLabel");
+    const familyBanner = document.getElementById("familyBanner");
+    const toggleModoBtn = document.getElementById("toggleModoBtn");
 
     const fechaInput = document.getElementById("fecha");
     const turnoSelect = document.getElementById("turno");
@@ -776,6 +819,9 @@
     const exportDiaBtn = document.getElementById("exportDia");
     const btnTurnoAhora = document.getElementById("btnTurnoAhora");
 
+    const alertasCard = document.getElementById("alertasCard");
+    const alertasTexto = document.getElementById("alertasTexto");
+
     const moodOptions = document.querySelectorAll(".mood-option");
     const moodRadios = document.querySelectorAll('input[name="estadoAnimo"]');
 
@@ -789,11 +835,12 @@
     const listaCantidad = document.getElementById("listaCantidad");
     const listaAgregarBtn = document.getElementById("listaAgregar");
     const listaPendientes = document.getElementById("listaPendientes");
+    const listaComprados = document.getElementById("listaComprados");
 
-    let saveTimeout = null;
-    let lastCuidadorValue = cuidadorSelect.value;
-    let listaComprasData = [];
+    // Guardamos el valor inicial del cuidador para validaciones
+    lastCuidadorValue = cuidadorSelect.value;
 
+    // --- Calendario de turnos base (usado para sugerencias) ---
     const schedule = {
       1: [
         { from: 0, to: 8 * 60, cuidador: "rocio" },
@@ -830,6 +877,7 @@
       ],
     };
 
+    // --- Helpers de fecha/hora ---
     function hoyISO() {
       const hoy = new Date();
       const y = hoy.getFullYear();
@@ -888,6 +936,7 @@
       return "noche";
     }
 
+    // --- Helpers de UI (estado de ánimo, etiquetas, formato) ---
     function getSelectedMood() {
       let value = "";
       moodRadios.forEach((r) => {
@@ -918,46 +967,31 @@
 
     function labelCuidador(value) {
       switch (value) {
-        case "guadalupe":
-          return "Guadalupe";
-        case "aylen":
-          return "Aylén";
-        case "noelia":
-          return "Noelia";
-        case "rocio":
-          return "Rocío";
-        case "otro":
-          return "Familiar / Otro";
-        default:
-          return value;
+        case "guadalupe": return "Guadalupe";
+        case "aylen":     return "Aylén";
+        case "noelia":    return "Noelia";
+        case "rocio":     return "Rocío";
+        case "otro":      return "Familiar / Otro";
+        default:          return value;
       }
     }
 
     function labelTurno(value) {
       switch (value) {
-        case "maniana":
-          return "Mañana";
-        case "tarde":
-          return "Tarde";
-        case "noche":
-          return "Noche";
-        case "completo":
-          return "24 hs";
-        default:
-          return value || "-";
+        case "maniana": return "Mañana";
+        case "tarde":   return "Tarde";
+        case "noche":   return "Noche";
+        case "completo":return "24 hs";
+        default:        return value || "-";
       }
     }
 
     function labelCategoria(cat) {
       switch (cat) {
-        case "almacen":
-          return "Almacén";
-        case "verduleria":
-          return "Verdulería";
-        case "carniceria":
-          return "Carnicería";
-        default:
-          return "Otro";
+        case "almacen":    return "Almacén";
+        case "verduleria": return "Verdulería";
+        case "carniceria": return "Carnicería";
+        default:           return "Otro";
       }
     }
 
@@ -977,6 +1011,7 @@
       }, 1500);
     }
 
+    // --- Carga/lectura de registros ---
     async function fetchRecordForCurrentKey() {
       const fecha = fechaInput.value || hoyISO();
       const cuidador = cuidadorSelect.value;
@@ -1019,12 +1054,12 @@
 
       registros.forEach((rec) => {
         result.turnos += 1;
-        if (rec.desayuno) result.desayuno = true;
-        if (rec.almuerzo) result.almuerzo = true;
-        if (rec.merienda) result.merienda = true;
-        if (rec.cena) result.cena = true;
+        if (rec.desayuno)    result.desayuno = true;
+        if (rec.almuerzo)    result.almuerzo = true;
+        if (rec.merienda)    result.merienda = true;
+        if (rec.cena)        result.cena = true;
         if (rec.med_maniana) result.medManiana = true;
-        if (rec.med_noche) result.medNoche = true;
+        if (rec.med_noche)   result.medNoche = true;
         const agua = rec.agua_vasos || 0;
         if (agua > result.aguaVasos) result.aguaVasos = agua;
       });
@@ -1033,6 +1068,8 @@
     }
 
     async function saveCurrentRecord() {
+      if (isFamilyView) return; // modo familia no guarda nada
+
       const record = {
         fecha: fechaInput.value || hoyISO(),
         turno: turnoSelect.value,
@@ -1063,24 +1100,24 @@
       try {
         const rec = await fetchRecordForCurrentKey();
         if (rec) {
-          desayunoInput.checked = rec.desayuno;
-          almuerzoInput.checked = rec.almuerzo;
-          meriendaInput.checked = rec.merienda;
-          cenaInput.checked = rec.cena;
-          aguaInput.value = rec.aguaVasos || "";
+          desayunoInput.checked   = rec.desayuno;
+          almuerzoInput.checked   = rec.almuerzo;
+          meriendaInput.checked   = rec.merienda;
+          cenaInput.checked       = rec.cena;
+          aguaInput.value         = rec.aguaVasos || "";
           medManianaInput.checked = rec.medManiana;
-          medNocheInput.checked = rec.medNoche;
-          notasInput.value = rec.notas || "";
+          medNocheInput.checked   = rec.medNoche;
+          notasInput.value        = rec.notas || "";
           setMoodUI(rec.estadoAnimo);
         } else {
-          desayunoInput.checked = false;
-          almuerzoInput.checked = false;
-          meriendaInput.checked = false;
-          cenaInput.checked = false;
-          aguaInput.value = "";
+          desayunoInput.checked   = false;
+          almuerzoInput.checked   = false;
+          meriendaInput.checked   = false;
+          cenaInput.checked       = false;
+          aguaInput.value         = "";
           medManianaInput.checked = false;
-          medNocheInput.checked = false;
-          notasInput.value = "";
+          medNocheInput.checked   = false;
+          notasInput.value        = "";
           clearMoodUI();
         }
         await actualizarEstadosVisuales();
@@ -1091,18 +1128,73 @@
     }
 
     async function resetCurrentRecord() {
-      desayunoInput.checked = false;
-      almuerzoInput.checked = false;
-      meriendaInput.checked = false;
-      cenaInput.checked = false;
-      aguaInput.value = "";
+      if (isFamilyView) return;
+      desayunoInput.checked   = false;
+      almuerzoInput.checked   = false;
+      meriendaInput.checked   = false;
+      cenaInput.checked       = false;
+      aguaInput.value         = "";
       medManianaInput.checked = false;
-      medNocheInput.checked = false;
-      notasInput.value = "";
+      medNocheInput.checked   = false;
+      notasInput.value        = "";
       clearMoodUI();
       await saveCurrentRecord();
     }
 
+    // --- Alertas inteligentes (comidas, medicación, agua, lista compras) ---
+    function actualizarAlertas() {
+      if (!alertasCard || !alertasTexto) return;
+
+      const mensajes = [];
+      const daily = ultimoDailySummary;
+
+      if (daily) {
+        const todasComidasDia =
+          daily.desayuno && daily.almuerzo && daily.merienda && daily.cena;
+
+        if (!todasComidasDia) {
+          const faltantes = [];
+          if (!daily.desayuno) faltantes.push("desayuno");
+          if (!daily.almuerzo) faltantes.push("almuerzo");
+          if (!daily.merienda) faltantes.push("merienda");
+          if (!daily.cena)     faltantes.push("cena");
+          mensajes.push(`🍽️ Faltan comidas por registrar: ${faltantes.join(", ")}.`);
+        }
+
+        if (!daily.medManiana || !daily.medNoche) {
+          if (!daily.medManiana && !daily.medNoche) {
+            mensajes.push("💊 No se registró medicación de hoy (mañana y noche).");
+          } else {
+            mensajes.push("💊 Medicación incompleta: falta marcar una de las franjas.");
+          }
+        }
+
+        if ((daily.aguaVasos || 0) === 0) {
+          mensajes.push("💧 No se registró agua para este día.");
+        }
+
+        if (daily.turnos === 0) {
+          mensajes.push("📋 Aún no hay ningún turno cargado hoy.");
+        }
+      }
+
+      const pendientesCompras = (listaComprasData || []).filter(
+        (i) => i.estado !== "comprado"
+      ).length;
+
+      if (pendientesCompras > 0) {
+        mensajes.push(`🛒 Hay ${pendientesCompras} producto(s) pendientes en la lista de compras.`);
+      }
+
+      if (mensajes.length === 0) {
+        alertasCard.style.display = "none";
+      } else {
+        alertasCard.style.display = "";
+        alertasTexto.textContent = mensajes.join(" ");
+      }
+    }
+
+    // --- Actualización de la UI según el estado del día ---
     async function actualizarEstadosVisuales() {
       const anyMeal =
         desayunoInput.checked ||
@@ -1149,6 +1241,7 @@
       const fechaDia = fechaInput.value || hoyISO();
       try {
         const daily = await getDailySummary(fechaDia);
+        ultimoDailySummary = daily; // guardamos para alertas
         const partes = [];
 
         const todasComidasDia =
@@ -1163,7 +1256,7 @@
           if (!daily.desayuno) faltantes.push("desayuno");
           if (!daily.almuerzo) faltantes.push("almuerzo");
           if (!daily.merienda) faltantes.push("merienda");
-          if (!daily.cena) faltantes.push("cena");
+          if (!daily.cena)     faltantes.push("cena");
           partes.push(
             `⚠️ Faltan comidas por registrar: ${faltantes.join(", ")}.`
           );
@@ -1195,6 +1288,7 @@
         }
 
         resumenTexto.textContent = partes.join(" ");
+        actualizarAlertas();
       } catch (e) {
         console.error(e);
         resumenTexto.textContent =
@@ -1202,6 +1296,7 @@
       }
     }
 
+    // --- Historial de turnos ---
     async function buildHistory() {
       try {
         const registros = await apiListar({ limite: 100 });
@@ -1276,29 +1371,33 @@
           item.appendChild(summary);
           item.appendChild(meta);
 
-          const deleteBtn = document.createElement("button");
-          deleteBtn.className = "delete-button";
-          deleteBtn.textContent = "Borrar";
-          deleteBtn.addEventListener("click", async (e) => {
-            e.stopPropagation();
-            const pin = window.prompt("Ingresá el PIN para borrar el turno:");
-            if (pin !== DELETE_PIN) return;
-            try {
-              await apiBorrar(rec.id);
-              await buildHistory();
-              await actualizarEstadosVisuales();
-            } catch (err) {
-              console.error(err);
-              alert("No se pudo borrar el registro.");
-            }
-          });
-          item.appendChild(deleteBtn);
+          // Botón borrar turno (solo en modo cuidadora)
+          if (!isFamilyView) {
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "delete-button";
+            deleteBtn.textContent = "Borrar";
+            deleteBtn.addEventListener("click", async (e) => {
+              e.stopPropagation();
+              const pin = window.prompt("Ingresá el PIN para borrar el turno:");
+              if (pin !== DELETE_PIN) return;
+              try {
+                await apiBorrar(rec.id);
+                await buildHistory();
+                await actualizarEstadosVisuales();
+              } catch (err) {
+                console.error(err);
+                alert("No se pudo borrar el registro.");
+              }
+            });
+            item.appendChild(deleteBtn);
+          }
 
+          // Click en el ítem → carga en el formulario
           item.addEventListener("click", () => {
-            fechaInput.value = fechaStr || hoyISO();
-            turnoSelect.value = rec.turno || "maniana";
+            fechaInput.value     = fechaStr || hoyISO();
+            turnoSelect.value    = rec.turno || "maniana";
             cuidadorSelect.value = rec.cuidador || "otro";
-            lastCuidadorValue = cuidadorSelect.value;
+            lastCuidadorValue    = cuidadorSelect.value;
             suggestInfo.textContent = "";
             loadCurrentRecord();
             window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1313,6 +1412,7 @@
       }
     }
 
+    // --- Sugerir turno y cuidadora según la hora actual ---
     function sugerirTurnoYCuidadorSegunAhora() {
       const hoy = hoyISO();
       fechaInput.value = hoy;
@@ -1341,6 +1441,7 @@
       )} · ${hora}:${min} hs`;
     }
 
+    // --- Validación de cambio de cuidadora según calendario ---
     async function handleCuidadorChange() {
       const newValue = cuidadorSelect.value;
       const fechaSel = fechaInput.value || hoyISO();
@@ -1367,6 +1468,7 @@
       await loadCurrentRecord();
     }
 
+    // --- Tabs Turno / Lista ---
     function activarTabTurno() {
       tabTurno.classList.add("active");
       tabLista.classList.remove("active");
@@ -1381,57 +1483,92 @@
       panelLista.style.display = "";
     }
 
+    // --- Render de lista de compras (agrupada por categoría) ---
     function renderListaCompras() {
-      if (!listaPendientes) return;
+      if (!listaPendientes || !listaComprados) return;
+
       if (!listaComprasData || listaComprasData.length === 0) {
         listaPendientes.innerHTML = "<div>No hay pendientes por ahora.</div>";
+        listaComprados.innerHTML = "<div>No hay compras registradas.</div>";
         return;
       }
 
-      listaPendientes.innerHTML = "";
-      const cont = document.createElement("div");
+      // Agrupamos por categoría y estado
+      const porCatPend = {};
+      const porCatComp = {};
 
       listaComprasData.forEach((item) => {
-        if (item.estado === "comprado") return;
+        const cat = item.categoria || "otro";
+        const target =
+          item.estado === "comprado" ? porCatComp : porCatPend;
 
-        const row = document.createElement("div");
-        row.className = "lista-item";
-
-        const main = document.createElement("div");
-        main.className = "lista-item-main";
-        main.innerHTML = `<span class="lista-cat">${labelCategoria(
-          item.categoria
-        )}</span>: ${item.cantidad} ${item.item}`;
-
-        const acc = document.createElement("div");
-        acc.className = "lista-accion";
-        const btn = document.createElement("button");
-        btn.className = "lista-btn-small";
-        btn.textContent = "✅ Comprado";
-        btn.addEventListener("click", async () => {
-          try {
-            await apiComprasMarcarComprado(item.id);
-            await cargarListaCompras();
-          } catch (e) {
-            console.error(e);
-            alert("No se pudo actualizar la lista.");
-          }
-        });
-        acc.appendChild(btn);
-
-        row.appendChild(main);
-        row.appendChild(acc);
-        cont.appendChild(row);
+        if (!target[cat]) target[cat] = [];
+        target[cat].push(item);
       });
 
-      listaPendientes.appendChild(cont);
+      function renderGrupo(targetElem, grupos, esPendiente) {
+        targetElem.innerHTML = "";
+        const cats = Object.keys(grupos);
+        if (cats.length === 0) {
+          targetElem.innerHTML = esPendiente
+            ? "<div>No hay pendientes por ahora.</div>"
+            : "<div>No hay compras recientes.</div>";
+          return;
+        }
+
+        cats.forEach((cat) => {
+          const title = document.createElement("div");
+          title.style.fontWeight = "600";
+          title.style.marginTop = "4px";
+          title.textContent = labelCategoria(cat);
+          targetElem.appendChild(title);
+
+          grupos[cat].forEach((item) => {
+            const row = document.createElement("div");
+            row.className = "lista-item";
+
+            const main = document.createElement("div");
+            main.className = "lista-item-main";
+            main.textContent = `${item.cantidad} ${item.item}`;
+
+            row.appendChild(main);
+
+            // Botón "Comprado" solo en modo cuidadora, para pendientes
+            if (esPendiente && !isFamilyView) {
+              const acc = document.createElement("div");
+              acc.className = "lista-accion";
+              const btn = document.createElement("button");
+              btn.className = "lista-btn-small";
+              btn.textContent = "✅ Comprado";
+              btn.addEventListener("click", async () => {
+                try {
+                  await apiComprasMarcarComprado(item.id);
+                  await cargarListaCompras();
+                } catch (e) {
+                  console.error(e);
+                  alert("No se pudo actualizar la lista.");
+                }
+              });
+              acc.appendChild(btn);
+              row.appendChild(acc);
+            }
+
+            targetElem.appendChild(row);
+          });
+        });
+      }
+
+      renderGrupo(listaPendientes, porCatPend, true);
+      renderGrupo(listaComprados, porCatComp, false);
     }
 
+    // --- Carga desde la base de lista de compras ---
     async function cargarListaCompras() {
       try {
         const data = await apiComprasListar();
         listaComprasData = Array.isArray(data) ? data : [];
         renderListaCompras();
+        actualizarAlertas();
       } catch (e) {
         console.error(e);
         listaPendientes.innerHTML =
@@ -1439,27 +1576,88 @@
       }
     }
 
+    // --- Modo familia (solo lectura) ---
+    function applyFamilyMode(enabled) {
+      isFamilyView = enabled;
+
+      if (familyBanner) {
+        familyBanner.style.display = enabled ? "" : "none";
+      }
+
+      if (toggleModoBtn) {
+        toggleModoBtn.textContent = enabled
+          ? "🔓 Volver a modo cuidadora"
+          : "👪 Modo familia";
+      }
+
+      // Inputs que deben bloquearse en modo familia
+      const inputs = [
+        fechaInput,
+        turnoSelect,
+        cuidadorSelect,
+        desayunoInput,
+        almuerzoInput,
+        meriendaInput,
+        cenaInput,
+        aguaInput,
+        medManianaInput,
+        medNocheInput,
+        notasInput,
+      ];
+
+      inputs.forEach((el) => {
+        if (!el) return;
+        el.disabled = enabled ? true : false;
+      });
+
+      // Estado de ánimo: bloqueamos los clics
+      moodOptions.forEach((opt) => {
+        opt.style.pointerEvents = enabled ? "none" : "";
+        opt.style.opacity = enabled ? "0.7" : "";
+      });
+
+      // Botones sensibles
+      if (resetDiaBtn)    resetDiaBtn.style.display = enabled ? "none" : "";
+      if (btnTurnoAhora)  btnTurnoAhora.style.display = enabled ? "none" : "";
+      if (listaAgregarBtn)listaAgregarBtn.style.display = enabled ? "none" : "";
+
+      // Reconstruimos partes que dependen del modo
+      buildHistory();
+      renderListaCompras();
+      actualizarAlertas();
+    }
+
+    // --- Inicialización general ---
     async function init() {
       currentDateLabel.textContent = "Hoy: " + formatHoyHumano();
 
+      // Estado inicial: modo cuidadora
+      applyFamilyMode(false);
+
+      // Sugerimos turno y cuidadora en base a la hora actual
       sugerirTurnoYCuidadorSegunAhora();
       await loadCurrentRecord();
       await buildHistory();
       await cargarListaCompras();
 
+      // Eventos de formulario de turno
       fechaInput.addEventListener("change", () => {
+        if (isFamilyView) return;
         suggestInfo.textContent = "";
         loadCurrentRecord();
       });
 
       turnoSelect.addEventListener("change", () => {
+        if (isFamilyView) return;
         loadCurrentRecord();
       });
 
       cuidadorSelect.addEventListener("change", () => {
+        if (isFamilyView) return;
         handleCuidadorChange();
       });
 
+      // Eventos de checkboxes y campos que guardan automáticamente
       [
         desayunoInput,
         almuerzoInput,
@@ -1480,21 +1678,26 @@
         saveCurrentRecord();
       });
 
+      // Estado de ánimo
       moodOptions.forEach((opt) => {
         const radio = opt.querySelector('input[name="estadoAnimo"]');
         opt.addEventListener("click", () => {
+          if (isFamilyView) return;
           setMoodUI(radio.value);
           saveCurrentRecord();
         });
       });
 
+      // Botón borrar turno actual
       resetDiaBtn.addEventListener("click", () => {
+        if (isFamilyView) return;
         if (!window.confirm("¿Seguro que querés borrar este turno completo?")) {
           return;
         }
         resetCurrentRecord();
       });
 
+      // Export CSV del día
       exportDiaBtn.addEventListener("click", () => {
         const fecha = fechaInput.value || hoyISO();
         const url = `${API_BASE}/exportar-csv?fecha=${encodeURIComponent(
@@ -1503,39 +1706,37 @@
         window.open(url, "_blank");
       });
 
+      // Botón "Turno en curso" (re-sugiere fecha/turno/cuidadora de ahora)
       btnTurnoAhora.addEventListener("click", () => {
+        if (isFamilyView) return;
         sugerirTurnoYCuidadorSegunAhora();
         loadCurrentRecord();
       });
 
+      // Tabs Turno / Lista
       if (tabTurno && tabLista) {
         tabTurno.addEventListener("click", activarTabTurno);
         tabLista.addEventListener("click", activarTabLista);
         activarTabTurno();
       }
 
-      if (listaAgregarBtn) {
-        listaAgregarBtn.addEventListener("click", async () => {
-          const categoria = listaCategoria.value || "otro";
-          const item = (listaItem.value || "").trim();
-          const cantidad = (listaCantidad.value || "").trim() || "1";
-
-          if (!item) {
-            alert("Escribí qué hay que comprar.");
-            return;
-          }
-
-          try {
-            await apiComprasAgregar({ categoria, item, cantidad });
-            listaItem.value = "";
-            listaCantidad.value = "";
-            await cargarListaCompras();
-          } catch (e) {
-            console.error(e);
-            alert("No se pudo guardar en la lista.");
+      // Botón modo familia / modo cuidadora
+      if (toggleModoBtn) {
+        toggleModoBtn.addEventListener("click", () => {
+          if (!isFamilyView) {
+            // Pasar a modo familia (sin PIN)
+            applyFamilyMode(true);
+          } else {
+            // Volver a modo cuidadora (con PIN)
+            const pin = window.prompt("Ingresá el PIN para volver a modo cuidadora:");
+            if (pin !== VIEW_PIN) return;
+            applyFamilyMode(false);
           }
         });
       }
+
+      // Calculamos alertas iniciales (por si ya hay datos)
+      actualizarAlertas();
     }
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -1544,4 +1745,3 @@
   </script>
 </body>
 </html>
-
