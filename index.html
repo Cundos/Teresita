@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>TERESITA APP</title>
+  <title>TERES APP</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- Favicon emoji 👵🏻 -->
@@ -171,7 +171,7 @@
       text-align: right;
       min-height: 1em;
       opacity: 0;
-      transition: opacity 0.25s.ease;
+      transition: opacity 0.25s ease;
     }
 
     .saved-message.visible {
@@ -496,7 +496,7 @@
 
     <!-- Agua -->
     <div class="card">
-      <h2>💧 Agua (por turno)</h2>
+      <h2>💧 Agua (día completo)</h2>
       <div class="row">
         <label for="aguaVasos">Vasos tomados en el día</label>
         <input type="number" id="aguaVasos" min="0" max="40" step="1" inputmode="numeric">
@@ -693,7 +693,7 @@
     const READ_ONLY = params.get("view") === "readonly";
 
     // 🔐 PIN para borrar registros
-    const DELETE_PIN = "2905";
+    const DELETE_PIN = "2580";
 
     async function apiGuardar(record) {
       const res = await fetch(API_BASE + "/guardar-registro", {
@@ -1673,6 +1673,7 @@
       lastCuidadorValue = cuidadorSelect.value;
     }
 
+    // ⏱️ Auto-ajuste continuo según hora del dispositivo (si la fecha es hoy)
     function autoActualizarSegunReloj() {
       const hoy = hoyISO();
       const fechaSel = fechaInput.value || hoy;
@@ -1702,7 +1703,6 @@
       }
     }
 
-    // ⚠️ Ajustado: siempre avisa cuando NO coincide con el calendario
     async function handleCuidadorChange() {
       const newValue = cuidadorSelect.value;
       const fechaSel = fechaInput.value || hoyISO();
@@ -1710,14 +1710,13 @@
 
       const scheduled = getScheduledCuidadorForFechaTurno(fechaSel, turnoSel);
 
-      if (scheduled && newValue !== scheduled) {
+      if (scheduled && newValue !== "otro" && newValue !== scheduled) {
         const nombreProgramado = labelCuidador(scheduled);
         const nombreNuevo      = labelCuidador(newValue);
-
         const ok = window.confirm(
-          `${nombreNuevo} no está asignada en el calendario para este turno.\n` +
-          `Según el cronograma, debería estar ${nombreProgramado}.\n\n` +
-          `¿Confirmás que ${nombreNuevo} está cubriendo este turno en reemplazo?`
+          `${nombreNuevo} no está programada para este turno.\n` +
+          `Según el calendario debería estar ${nombreProgramado}.\n\n` +
+          `¿Confirmás que ${nombreNuevo} está cubriendo el turno de otra persona?`
         );
         if (!ok) {
           cuidadorSelect.value = lastCuidadorValue;
@@ -1730,21 +1729,19 @@
       await loadCurrentRecord();
     }
 
-    // ⚠️ Ajustado: también avisa al cambiar turno si la cuidadora no coincide
     async function handleTurnoChange() {
       const fechaSel = fechaInput.value || hoyISO();
       const turnoSel = turnoSelect.value;
       const scheduled = getScheduledCuidadorForFechaTurno(fechaSel, turnoSel);
-      const cuidadorActual = cuidadorSelect.value;
 
-      if (scheduled && cuidadorActual !== scheduled) {
+      if (scheduled && cuidadorSelect.value !== "otro" && cuidadorSelect.value !== scheduled) {
         const nombreProgramado = labelCuidador(scheduled);
-        const nombreActual     = labelCuidador(cuidadorActual);
+        const nombreActual     = labelCuidador(cuidadorSelect.value);
 
         const ok = window.confirm(
-          `${nombreActual} no está asignada en el calendario para este turno.\n` +
-          `Según el cronograma, debería estar ${nombreProgramado}.\n\n` +
-          `¿Confirmás que ${nombreActual} está cubriendo un turno distinto al asignado?`
+          `${nombreActual} no está programada para este turno.\n` +
+          `Según el calendario debería estar ${nombreProgramado}.\n\n` +
+          `¿Confirmás que ${nombreActual} está cubriendo un horario distinto al asignado?`
         );
 
         if (!ok) {
