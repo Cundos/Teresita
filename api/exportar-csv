@@ -1,45 +1,102 @@
-// api/exportar-csv.js
-const { getPool } = require("./db.js");
+// /api/exportar-csv.js
+import { Pool } from "pg";
 
-module.exports = async (req, res) => {
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
+
+function escapeCSV(value) {
+  if (value === null || value === undefined) return "";
+  const s = String(value);
+  // Si contiene comillas, coma o salto de línea → encerrar en comillas dobles
+  if (/[",\n\r]/.test(s)) {
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+  return s;
+}
+
+function formatFechaISO(fecha) {
+  if (!fecha) return "";
+  if (fecha instanceof Date) {
+    return fecha.toISOString().slice(0, 10); // yyyy-mm-dd
+  }
+  // Si ya viene como string 'yyyy-mm-dd' desde Postgres, devolver tal cual
+  return String(fecha).slice(0, 10);
+}
+
+export default async function handler(req, res) {
   if (req.method !== "GET") {
-    return res.status(405).json({ error: "Método no permitido" });
+    res.setHeader("Allow", "GET");
+    return res.status(405).json({ ok: false, error: "Método no permitido" });
   }
 
-  const { fecha } = req.query;
-  if (!fecha) {
-    return res.status(400).json({ error: "Debe indicar fecha=YYYY-MM-DD" });
+  if (!process.env.DATABASE_URL) {
+    return res
+      .status(500)
+      .json({ ok: false, error: "DATABASE_URL no está configurada" });
   }
 
+  const { fecha, desde, hasta } = req.query;
+
+  let whereParts = [];
+  const values = [];
+  let idx = 1;
+
+  if (fecha) {
+    whereParts.push(`fecha = $${idx++}`);
+    values.push(fecha);
+  } else {
+    if (desde) {
+      whereParts.push(`fecha >= $${idx++}`);
+      values.push(desde);
+    }
+    if (hasta) {
+      whereParts.push(`fecha <= $${idx++}`);
+      values.push(hasta);
+    }
+  }
+
+  let sql = `
+    SELECT
+      fecha,
+      turno,
+      cuidador,
+      desayuno,
+      almuerzo,
+      merienda,
+      cena,
+      agua_vasos,
+      med_maniana,
+      med_noche,
+      estado_animo,
+      notas
+    FROM registros
+  `;
+
+  if (whereParts.length > 0) {
+    sql += " WHERE " + whereParts.join(" AND ");
+  }
+
+  sql += `
+    ORDER BY
+      fecha ASC,
+      turno ASC,
+      cuidador ASC
+  `;
+
+  let client;
   try {
-    const pool = getPool();
+    client = await pool.connect();
+    const result = await client.query(sql, values);
 
-    const query = `
-      SELECT
-        fecha,
-        turno,
-        cuidador,
-        desayuno,
-        almuerzo,
-        merienda,
-        cena,
-        agua_vasos,
-        med_maniana,
-        med_noche,
-        estado_animo,
-        notas,
-        created_at,
-        updated_at
-      FROM registros_cuidado
-      WHERE fecha = $1
-      ORDER BY turno, cuidador;
-    `;
-    const { rows } = await pool.query(query, [fecha]);
+    const rows = result.rows || [];
 
-    const header = [
+    // Encabezados fijos
+    const headers = [
       "fecha",
       "turno",
-      "cuidador",
+      "cuidadora",
       "desayuno",
       "almuerzo",
       "merienda",
@@ -49,55 +106,63 @@ module.exports = async (req, res) => {
       "med_noche",
       "estado_animo",
       "notas",
-      "created_at",
-      "updated_at"
     ];
 
-    const esc = (val) => {
-      if (val == null) return "";
-      const s = String(val).replace(/"/g, '""');
-      return `"${s}"`;
-    };
-
     const lines = [];
-    lines.push(header.join(","));
 
-    for (const r of rows) {
-      const fechaStr =
-        r.fecha && typeof r.fecha.toISOString === "function"
-          ? r.fecha.toISOString().slice(0, 10)
-          : r.fecha;
+    // Primera línea: encabezados
+    lines.push(headers.join(","));
 
-      lines.push(
-        [
-          fechaStr,
-          r.turno,
-          r.cuidador,
-          r.desayuno,
-          r.almuerzo,
-          r.merienda,
-          r.cena,
-          r.agua_vasos,
-          r.med_maniana,
-          r.med_noche,
-          r.estado_animo,
-          r.notas,
-          r.created_at,
-          r.updated_at
-        ].map(esc).join(",")
-      );
+    // Filas
+    for (const row of rows) {
+      const fechaOut = formatFechaISO(row.fecha);
+      const lineValues = [
+        fechaOut,
+        row.turno || "",
+        row.cuidador || "",
+        row.desayuno ? 1 : 0,
+        row.almuerzo ? 1 : 0,
+        row.merienda ? 1 : 0,
+        row.cena ? 1 : 0,
+        row.agua_vasos ?? 0,
+        row.med_maniana ? 1 : 0,
+        row.med_noche ? 1 : 0,
+        row.estado_animo || "",
+        row.notas || "",
+      ].map(escapeCSV);
+
+      lines.push(lineValues.join(","));
     }
 
-    const csv = lines.join("\r\n");
+    const csvBody = lines.join("\n");
+    const bom = "\uFEFF"; // Para que Excel reconozca bien UTF-8
+
+    let filename = "teresita_registros.csv";
+    if (fecha) {
+      filename = `teresita_registros_${fecha}.csv`;
+    } else if (desde && hasta) {
+      filename = `teresita_registros_${desde}_a_${hasta}.csv`;
+    } else if (desde) {
+      filename = `teresita_registros_desde_${desde}.csv`;
+    } else if (hasta) {
+      filename = `teresita_registros_hasta_${hasta}.csv`;
+    }
 
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename="tere-registros-${fecha}.csv"`
+      `attachment; filename="${filename}"`
     );
-    return res.status(200).send(csv);
+
+    res.status(200).send(bom + csvBody);
   } catch (err) {
-    console.error("Error en exportar-csv:", err);
-    return res.status(500).json({ error: "Error interno al exportar" });
+    console.error("Error exportando CSV:", err);
+    res.status(500).json({
+      ok: false,
+      error: "Error al generar CSV",
+      detail: err.message,
+    });
+  } finally {
+    if (client) client.release();
   }
-};
+}
