@@ -685,7 +685,7 @@
     </div>
   </div>
 
-  <script>
+  <  <script>
     const API_BASE = "/api";
 
     async function apiGuardar(record) {
@@ -716,6 +716,86 @@
       const res = await fetch(url.toString(), { method: "POST" });
       if (!res.ok) throw new Error("Error al borrar registro");
       return await res.json();
+    }
+
+    // ==== Helpers para exportar CSV en el cliente ====
+    function escapeCSV(value) {
+      if (value === null || value === undefined) return "";
+      const s = String(value);
+      if (/[",\n\r]/.test(s)) {
+        return `"${s.replace(/"/g, '""')}"`;
+      }
+      return s;
+    }
+
+    async function exportarCsvDia(fechaStr) {
+      try {
+        const registros = await apiListar({ fecha: fechaStr });
+
+        const headers = [
+          "fecha",
+          "turno",
+          "cuidadora",
+          "desayuno",
+          "almuerzo",
+          "merienda",
+          "cena",
+          "agua_vasos",
+          "med_maniana",
+          "med_noche",
+          "estado_animo",
+          "notas"
+        ];
+
+        const lines = [];
+        lines.push(headers.join(","));
+
+        registros.forEach(r => {
+          const fechaOut = formatFechaISO(r.fecha);
+          const row = [
+            fechaOut,
+            r.turno || "",
+            r.cuidador || "",
+            r.desayuno ? 1 : 0,
+            r.almuerzo ? 1 : 0,
+            r.merienda ? 1 : 0,
+            r.cena ? 1 : 0,
+            r.agua_vasos ?? 0,
+            r.med_maniana ? 1 : 0,
+            r.med_noche ? 1 : 0,
+            r.estado_animo || "",
+            r.notas || ""
+          ].map(escapeCSV);
+
+          lines.push(row.join(","));
+        });
+
+        const csv = lines.join("\n");
+        const bom = "\uFEFF";
+        const blob = new Blob([bom + csv], {
+          type: "text/csv;charset=utf-8;"
+        });
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `teresita_registros_${fechaStr}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        console.error(e);
+        alert("No se pudo exportar el CSV. Revisar conexión.");
+      }
+    }
+
+    function formatFechaISO(fecha) {
+      if (!fecha) return "";
+      if (fecha instanceof Date) {
+        return fecha.toISOString().slice(0, 10);
+      }
+      return String(fecha).slice(0, 10);
     }
 
     const fechaInput       = document.getElementById("fecha");
@@ -1052,7 +1132,6 @@
       const allMeals = desayunoInput.checked && almuerzoInput.checked &&
                        meriendaInput.checked && cenaInput.checked;
 
-      // Estado de comidas (turno)
       statusComidas.classList.remove("status-ok", "status-pending", "status-bad");
       if (allMeals) {
         statusComidas.textContent = "Comidas completas (turno)";
@@ -1122,7 +1201,6 @@
 
         resumenTexto.textContent = partes.join(" ");
 
-        // Estado general del día (pill)
         statusDia.classList.remove("status-ok", "status-pending", "status-bad");
         if (daily.turnos === 0) {
           statusDia.textContent = "Sin datos";
@@ -1131,7 +1209,7 @@
           const diaCompleto =
             todasComidasDia &&
             daily.medManiana && daily.medNoche &&
-            (daily.aguaVasos >= 6); // sugerencia mínima de agua
+            (daily.aguaVasos >= 6);
 
           if (diaCompleto) {
             statusDia.textContent = "Día completo";
@@ -1158,7 +1236,6 @@
           return;
         }
 
-        // Agrupamos primero por fecha (día)
         const porDia = new Map();
 
         registros.forEach(rec => {
@@ -1169,15 +1246,13 @@
           porDia.get(fechaStr).push(rec);
         });
 
-        // Ordenamos días de más reciente a más viejo
         const diasOrdenados = Array.from(porDia.entries()).sort((a, b) => {
-          return a[0] < b[0] ? 1 : -1; // yyyy-mm-dd, orden descendente
+          return a[0] < b[0] ? 1 : -1;
         });
 
         historialLista.innerHTML = "";
 
         diasOrdenados.forEach(([fechaStr, recsDia]) => {
-          // Resumen diario
           let resumenDia = {
             desayuno: false,
             almuerzo: false,
@@ -1235,7 +1310,6 @@
           const itemsContainer = document.createElement("div");
           itemsContainer.className = "history-day-items";
 
-          // Dentro del día, consolidamos por turno+cuidador para evitar duplicados
           const agrupados = new Map();
           recsDia.forEach(rec => {
             const key = `${rec.turno}|${rec.cuidador}`;
@@ -1245,8 +1319,6 @@
           });
 
           const turnosDia = Array.from(agrupados.values());
-
-          // Ordenamos turnos dentro del día (mañana, tarde, noche, completo)
           const ordenTurno = { maniana: 0, tarde: 1, noche: 2, completo: 3 };
           turnosDia.sort((a, b) => {
             const ta = ordenTurno[a.turno] ?? 99;
@@ -1272,7 +1344,6 @@
             const item = document.createElement("div");
             item.className = "history-item";
 
-            // Resaltamos turnos "vacíos" o incompletos
             const turnoVacio = comidasCount === 0 && medCount === 0;
             const turnoIncompleto = !turnoVacio && (comidasCount < 4 || medCount < 2);
 
@@ -1352,7 +1423,6 @@
       }
     }
 
-    // Helpers dashboard
     function diasEntre(desdeStr, hastaStr) {
       const dias = [];
       const desde = new Date(desdeStr + "T00:00:00");
@@ -1399,7 +1469,6 @@
         }
       });
 
-      // estado de ánimo predominante
       let mood = "";
       let maxCount = 0;
       Object.entries(resumen.estados).forEach(([k, v]) => {
@@ -1426,7 +1495,6 @@
       dashTabla.innerHTML = "";
 
       const dias = diasEntre(desde, hasta);
-
       const porDia = new Map();
 
       for (const dia of dias) {
@@ -1695,10 +1763,10 @@
 
       resetDiaBtn.addEventListener("click", () => { resetCurrentRecord(); });
 
+      // 🔁 Exportar día: ahora desde el cliente
       exportDiaBtn.addEventListener("click", () => {
         const fecha = fechaInput.value || hoyISO();
-        const url = `${API_BASE}/exportar-csv?fecha=${encodeURIComponent(fecha)}`;
-        window.open(url, "_blank");
+        exportarCsvDia(fecha);
       });
 
       // Dashboard: valores por defecto y botón
@@ -1717,5 +1785,7 @@
       init();
     });
   </script>
+
 </body>
 </html>
+
