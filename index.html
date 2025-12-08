@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>TERESISTA APP</title>
+  <title>TERES APP</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- Favicon emoji 👵🏻 -->
@@ -650,7 +650,7 @@
       </table>
     </div>
 
-    <!-- 📊 Resumen de período (debajo del calendario) -->
+    <!-- 📊 Resumen de período -->
     <div class="card">
       <h2>📊 Resumen de período</h2>
       <div class="two-cols">
@@ -684,9 +684,15 @@
     </div>
   </div>
 
-  <!-- SCRIPT COMPLETO (incluye export CSV en cliente y dashboard) -->
   <script>
     const API_BASE = "/api";
+
+    // 🔒 Modo lectura vía ?view=readonly
+    const params = new URLSearchParams(window.location.search);
+    const READ_ONLY = params.get("view") === "readonly";
+
+    // 🔐 PIN para borrar registros (cámbialo si querés)
+    const DELETE_PIN = "2580";
 
     async function apiGuardar(record) {
       const res = await fetch(API_BASE + "/guardar-registro", {
@@ -1055,6 +1061,7 @@
     }
 
     async function saveCurrentRecord() {
+      if (READ_ONLY) return; // Seguridad extra
       const record = {
         fecha: fechaInput.value || hoyISO(),
         turno: turnoSelect.value,
@@ -1094,7 +1101,7 @@
           medNocheInput.checked   = rec.medNoche;
           notasInput.value        = rec.notas || "";
           setMoodUI(rec.estadoAnimo);
-          turnoInfo.textContent   = "Turno ya registrado. Estás editando la información guardada.";
+          turnoInfo.textContent   = "Turno ya registrado. Estás consultando o editando la información guardada.";
         } else {
           desayunoInput.checked   = false;
           almuerzoInput.checked   = false;
@@ -1114,6 +1121,7 @@
     }
 
     async function resetCurrentRecord() {
+      if (READ_ONLY) return;
       desayunoInput.checked   = false;
       almuerzoInput.checked   = false;
       meriendaInput.checked   = false;
@@ -1383,20 +1391,30 @@
             item.appendChild(main);
             item.appendChild(summary);
 
-            const deleteBtn = document.createElement("button");
-            deleteBtn.className = "delete-button";
-            deleteBtn.textContent = "Borrar";
-            deleteBtn.addEventListener("click", async (e) => {
-              e.stopPropagation();
-              try {
-                await apiBorrar(rec.id);
-                await buildHistory();
-                await actualizarEstadosVisuales();
-              } catch (err) {
-                console.error(err);
-              }
-            });
-            item.appendChild(deleteBtn);
+            // 🔐 Botón borrar con PIN, sólo si NO es modo lectura
+            if (!READ_ONLY) {
+              const deleteBtn = document.createElement("button");
+              deleteBtn.className = "delete-button";
+              deleteBtn.textContent = "Borrar";
+              deleteBtn.addEventListener("click", async (e) => {
+                e.stopPropagation();
+                const pin = window.prompt("Ingresá el PIN para borrar este turno:");
+                if (pin === null) return;
+                if (pin !== DELETE_PIN) {
+                  alert("PIN incorrecto. No se borró el registro.");
+                  return;
+                }
+                try {
+                  await apiBorrar(rec.id);
+                  await buildHistory();
+                  await actualizarEstadosVisuales();
+                } catch (err) {
+                  console.error(err);
+                  alert("No se pudo borrar el registro.");
+                }
+              });
+              item.appendChild(deleteBtn);
+            }
 
             item.appendChild(meta);
 
@@ -1714,6 +1732,31 @@
 
       currentDateLabel.textContent = "Hoy: " + formatFecha(hoyStr);
 
+      // Banner de modo lectura
+      if (READ_ONLY) {
+        const subtitle = document.querySelector(".subtitle");
+        const banner = document.createElement("div");
+        banner.className = "small-text";
+        banner.style.textAlign = "center";
+        banner.style.marginBottom = "10px";
+        banner.textContent = "🔒 Modo lectura: sólo consulta. No se pueden modificar ni borrar registros desde este enlace.";
+        subtitle.insertAdjacentElement("afterend", banner);
+
+        // Deshabilitar controles de edición
+        [
+          desayunoInput,
+          almuerzoInput,
+          meriendaInput,
+          cenaInput,
+          aguaInput,
+          medManianaInput,
+          medNocheInput,
+          notasInput
+        ].forEach(el => el.disabled = true);
+
+        resetDiaBtn.style.display = "none";
+      }
+
       sugerirTurnoYCuidadorSegunAhora();
       await loadCurrentRecord();
       await buildHistory();
@@ -1721,7 +1764,7 @@
       fechaInput.addEventListener("change", () => {
         const valor = fechaInput.value;
         const hoy = hoyISO();
-        if (valor && valor > hoy) {
+        if (!READ_ONLY && valor && valor > hoy) {
           alert("No se pueden registrar turnos en fechas futuras. Se usará la fecha de hoy.");
           fechaInput.value = hoy;
         }
@@ -1741,27 +1784,36 @@
         handleCuidadorChange();
       });
 
-      [
-        desayunoInput,
-        almuerzoInput,
-        meriendaInput,
-        cenaInput,
-        medManianaInput,
-        medNocheInput
-      ].forEach(el => el.addEventListener("change", () => { saveCurrentRecord(); }));
+      if (!READ_ONLY) {
+        [
+          desayunoInput,
+          almuerzoInput,
+          meriendaInput,
+          cenaInput,
+          medManianaInput,
+          medNocheInput
+        ].forEach(el => el.addEventListener("change", () => { saveCurrentRecord(); }));
 
-      aguaInput.addEventListener("input", () => { saveCurrentRecord(); });
-      notasInput.addEventListener("input", () => { saveCurrentRecord(); });
+        aguaInput.addEventListener("input", () => { saveCurrentRecord(); });
+        notasInput.addEventListener("input", () => { saveCurrentRecord(); });
 
-      moodOptions.forEach(opt => {
-        const radio = opt.querySelector('input[name="estadoAnimo"]');
-        opt.addEventListener("click", () => {
-          setMoodUI(radio.value);
-          saveCurrentRecord();
+        moodOptions.forEach(opt => {
+          const radio = opt.querySelector('input[name="estadoAnimo"]');
+          opt.addEventListener("click", () => {
+            setMoodUI(radio.value);
+            saveCurrentRecord();
+          });
         });
-      });
 
-      resetDiaBtn.addEventListener("click", () => { resetCurrentRecord(); });
+        resetDiaBtn.addEventListener("click", () => { resetCurrentRecord(); });
+      } else {
+        // En modo lectura, el clic en estado de ánimo no debe cambiar nada
+        moodOptions.forEach(opt => {
+          opt.addEventListener("click", () => {
+            // no-op
+          });
+        });
+      }
 
       exportDiaBtn.addEventListener("click", () => {
         const fecha = fechaInput.value || hoyISO();
