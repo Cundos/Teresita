@@ -29,8 +29,8 @@
     }
 
     h1 {
-      font-size: 1.4rem;
-      margin: 0 0 8px;
+      font-size: 1.5rem;
+      margin: 4px 0 4px;
       text-align: center;
     }
 
@@ -38,13 +38,20 @@
       font-size: 0.9rem;
       text-align: center;
       color: #666;
+      margin-bottom: 8px;
+    }
+
+    .date-label {
+      font-size: 0.8rem;
+      text-align: center;
+      color: #777;
       margin-bottom: 16px;
     }
 
     .card {
       background: #fff;
       border-radius: 12px;
-      padding: 12px 14px;
+      padding: 14px 16px;
       margin-bottom: 12px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.06);
     }
@@ -129,6 +136,11 @@
       color: #8a4b00;
     }
 
+    .status-bad {
+      background: #ffd6d6;
+      color: #8a0000;
+    }
+
     .small-text {
       font-size: 0.8rem;
       color: #666;
@@ -151,7 +163,7 @@
     button.reset-btn {
       width: 100%;
       margin-top: 6px;
-      padding: 8px;
+      padding: 9px;
       border-radius: 999px;
       border: none;
       font-size: 0.9rem;
@@ -167,7 +179,7 @@
     button.export-btn {
       width: 100%;
       margin-top: 8px;
-      padding: 8px;
+      padding: 9px;
       border-radius: 999px;
       border: none;
       font-size: 0.9rem;
@@ -241,7 +253,7 @@
       display: flex;
       flex-direction: column;
       gap: 2px;
-      padding: 6px 8px;
+      padding: 8px 8px;
       border-radius: 8px;
       border: 1px solid #eee;
       background: #ffffff;
@@ -301,7 +313,7 @@
       flex: 1;
       border-radius: 10px;
       border: 1px solid #ddd;
-      padding: 6px 4px;
+      padding: 8px 4px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -322,7 +334,7 @@
     }
 
     .mood-emoji {
-      font-size: 1.5rem;
+      font-size: 1.6rem;
       line-height: 1;
     }
 
@@ -377,6 +389,7 @@
         (comidas, agua, medicación y estado de ánimo)
       </em>
     </div>
+    <div id="currentDateLabel" class="date-label"></div>
 
     <!-- Datos generales -->
     <div class="card">
@@ -504,16 +517,29 @@
 
     <!-- Estado general día -->
     <div class="card">
-      <h2>Resumen rápido del día</h2>
+      <h2>
+        Resumen rápido del día
+        <span id="statusDia" class="status-pill"></span>
+      </h2>
       <div id="resumenTexto" class="small-text"></div>
     </div>
 
     <!-- Historial -->
     <div class="card">
       <h2>Historial reciente</h2>
-      <div class="small-text">
+      <div class="small-text" style="margin-bottom:4px;">
         Ver últimos turnos registrados. Tocá un ítem para cargarlo en el formulario.<br>
         El resumen se consolida por día (comidas, medicación y agua).
+      </div>
+      <div class="small-text" style="margin-bottom:6px;">
+        <span style="display:inline-flex;align-items:center;gap:4px;margin-right:8px;">
+          <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff0f0;border:1px solid #ffb3b3;"></span>
+          Turno vacío
+        </span>
+        <span style="display:inline-flex;align-items:center;gap:4px;">
+          <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff8ee;border:1px solid #ffe0b3;"></span>
+          Turno incompleto
+        </span>
       </div>
       <div id="historialLista" class="history-list"></div>
     </div>
@@ -639,6 +665,7 @@
     const notasInput       = document.getElementById("notas");
     const statusComidas    = document.getElementById("statusComidas");
     const statusMed        = document.getElementById("statusMed");
+    const statusDia        = document.getElementById("statusDia");
     const resumenTexto     = document.getElementById("resumenTexto");
     const savedMessage     = document.getElementById("savedMessage");
     const resetDiaBtn      = document.getElementById("resetDia");
@@ -646,6 +673,7 @@
     const suggestInfo      = document.getElementById("suggestInfo");
     const turnoInfo        = document.getElementById("turnoInfo");
     const exportDiaBtn     = document.getElementById("exportDia");
+    const currentDateLabel = document.getElementById("currentDateLabel");
 
     const moodOptions      = document.querySelectorAll(".mood-option");
     const moodRadios       = document.querySelectorAll('input[name="estadoAnimo"]');
@@ -696,6 +724,14 @@
       const m = String(hoy.getMonth() + 1).padStart(2, "0");
       const d = String(hoy.getDate()).padStart(2, "0");
       return `${y}-${m}-${d}`;
+    }
+
+    function formatFecha(fechaStr) {
+      if (!fechaStr) return "-";
+      const base = fechaStr.slice(0, 10);
+      const [y, m, d] = base.split("-");
+      if (!y || !m || !d) return fechaStr;
+      return `${d}/${m}/${y}`;
     }
 
     function getNowInfo() {
@@ -787,14 +823,6 @@
         case "completo":return "24 hs";
         default:        return value || "-";
       }
-    }
-
-    function formatFecha(fechaStr) {
-      if (!fechaStr) return "-";
-      const base = fechaStr.slice(0, 10);
-      const [y, m, d] = base.split("-");
-      if (!y || !m || !d) return fechaStr;
-      return `${d}/${m}/${y}`;
     }
 
     function mostrarGuardado() {
@@ -937,35 +965,32 @@
       const allMeals = desayunoInput.checked && almuerzoInput.checked &&
                        meriendaInput.checked && cenaInput.checked;
 
+      // Estado de comidas (turno)
+      statusComidas.classList.remove("status-ok", "status-pending", "status-bad");
       if (allMeals) {
         statusComidas.textContent = "Comidas completas (turno)";
         statusComidas.classList.add("status-ok");
-        statusComidas.classList.remove("status-pending");
       } else if (anyMeal) {
         statusComidas.textContent = "Comidas incompletas (turno)";
         statusComidas.classList.add("status-pending");
-        statusComidas.classList.remove("status-ok");
       } else {
         statusComidas.textContent = "Sin comidas registradas en este turno";
         statusComidas.classList.add("status-pending");
-        statusComidas.classList.remove("status-ok");
       }
 
       const medAny = medManianaInput.checked || medNocheInput.checked;
       const medAll = medManianaInput.checked && medNocheInput.checked;
 
+      statusMed.classList.remove("status-ok", "status-pending", "status-bad");
       if (medAll) {
         statusMed.textContent = "Medicación completa (turno)";
         statusMed.classList.add("status-ok");
-        statusMed.classList.remove("status-pending");
       } else if (medAny) {
         statusMed.textContent = "Medicación incompleta (turno)";
         statusMed.classList.add("status-pending");
-        statusMed.classList.remove("status-ok");
       } else {
         statusMed.textContent = "Sin medicación registrada en este turno";
         statusMed.classList.add("status-pending");
-        statusMed.classList.remove("status-ok");
       }
 
       const fechaDia = fechaInput.value || hoyISO();
@@ -1005,13 +1030,35 @@
         if (daily.turnos > 0) {
           partes.push(`📋 Turnos registrados en el día: ${daily.turnos}.`);
         } else {
-          partes.push("📋 Aún no hay turnos registrados para este día.");
+          partes.push("📋 Aún no hay turnos registrados para este día.`);
         }
 
         resumenTexto.textContent = partes.join(" ");
+
+        // Estado general del día (pill)
+        statusDia.classList.remove("status-ok", "status-pending", "status-bad");
+        if (daily.turnos === 0) {
+          statusDia.textContent = "Sin datos";
+          statusDia.classList.add("status-bad");
+        } else {
+          const diaCompleto =
+            todasComidasDia &&
+            daily.medManiana && daily.medNoche &&
+            (daily.aguaVasos >= 6); // sugerencia mínima de agua
+
+          if (diaCompleto) {
+            statusDia.textContent = "Día completo";
+            statusDia.classList.add("status-ok");
+          } else {
+            statusDia.textContent = "Día incompleto";
+            statusDia.classList.add("status-pending");
+          }
+        }
       } catch (e) {
         console.error(e);
         resumenTexto.textContent = "No se pudo obtener el resumen diario (problema de conexión).";
+        statusDia.textContent = "";
+        statusDia.classList.remove("status-ok", "status-pending", "status-bad");
       }
     }
 
@@ -1043,7 +1090,7 @@
         historialLista.innerHTML = "";
 
         diasOrdenados.forEach(([fechaStr, recsDia]) => {
-          // Resumen diario (similar a getDailySummary)
+          // Resumen diario
           let resumenDia = {
             desayuno: false,
             almuerzo: false,
@@ -1101,7 +1148,7 @@
           const itemsContainer = document.createElement("div");
           itemsContainer.className = "history-day-items";
 
-          // Dentro del día, consolidamos por fecha+turno+cuidador para evitar duplicados
+          // Dentro del día, consolidamos por turno+cuidador para evitar duplicados
           const agrupados = new Map();
           recsDia.forEach(rec => {
             const key = `${rec.turno}|${rec.cuidador}`;
@@ -1295,9 +1342,11 @@
     }
 
     async function init() {
-      // Bloquear fechas futuras
-      const hoy = hoyISO();
-      fechaInput.max = hoy;
+      const hoyStr = hoyISO();
+      fechaInput.max = hoyStr;
+
+      // Etiqueta "Hoy: dd/mm/aaaa"
+      currentDateLabel.textContent = "Hoy: " + formatFecha(hoyStr);
 
       sugerirTurnoYCuidadorSegunAhora();
       await loadCurrentRecord();
@@ -1305,12 +1354,15 @@
 
       fechaInput.addEventListener("change", () => {
         const valor = fechaInput.value;
-        const hoyStr = hoyISO();
-        if (valor && valor > hoyStr) {
+        const hoy = hoyISO();
+        if (valor && valor > hoy) {
           alert("No se pueden registrar turnos en fechas futuras. Se usará la fecha de hoy.");
-          fechaInput.value = hoyStr;
+          fechaInput.value = hoy;
         }
         suggestInfo.textContent = "";
+        currentDateLabel.textContent =
+          valor && valor <= hoy ? "Día seleccionado: " + formatFecha(valor)
+                                : "Hoy: " + formatFecha(hoy);
         loadCurrentRecord();
       });
 
