@@ -1384,7 +1384,7 @@
             const meta = document.createElement("div");
             meta.className = "history-meta";
             meta.textContent = rec.notas
-              ? `Notas: ${rec.notas.slice(0, 60)}${rec.notas.length > 60 ? "..." : ""}`
+              ? `Notas: ${rec.notas.slice(0, 200)}${rec.notas.length > 200 ? "..." : ""}`
               : "Sin notas.";
 
             const summary = document.createElement("div");
@@ -1883,3 +1883,4 @@
   </script>
 </body>
 </html>
+
