@@ -13,7 +13,6 @@
   >
 
   <style>
-   
     * { box-sizing: border-box; }
 
     body {
@@ -181,13 +180,61 @@
       opacity: 0.85;
     }
 
+    /* Botón borrar historial */
+    .delete-button {
+      margin-top: 4px;
+      align-self: flex-end;
+      font-size: 0.7rem;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: none;
+      background: #ffe5e5;
+      color: #a00000;
+      cursor: pointer;
+    }
+
+    .delete-button:active {
+      opacity: 0.8;
+    }
+
     /* Historial */
     .history-list {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
       max-height: 260px;
       overflow-y: auto;
+    }
+
+    .history-day {
+      border-radius: 10px;
+      border: 1px solid #eee;
+      padding: 6px 8px;
+      background: #fafafa;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .history-day-header {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #444;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .history-day-summary {
+      font-size: 0.75rem;
+      color: #666;
+    }
+
+    .history-day-items {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 4px;
     }
 
     .history-item {
@@ -197,7 +244,7 @@
       padding: 6px 8px;
       border-radius: 8px;
       border: 1px solid #eee;
-      background: #fafafa;
+      background: #ffffff;
       font-size: 0.8rem;
       cursor: pointer;
     }
@@ -225,6 +272,16 @@
 
     .history-item:active {
       opacity: 0.7;
+    }
+
+    .history-item-empty {
+      border-color: #ffb3b3;
+      background: #fff0f0;
+    }
+
+    .history-item-incomplete {
+      border-color: #ffe0b3;
+      background: #fff8ee;
     }
 
     .badge {
@@ -273,59 +330,53 @@
       font-size: 0.8rem;
     }
 
-/* Calendario de turnos – versión simple y prolija */
-		.schedule-table {
-		  width: 100%;
-		  border-collapse: collapse;
-		  font-size: 0.8rem;
-		  margin-top: 4px;
-		  border: 1px solid #ddd;
-		}
+    /* Calendario de turnos – versión simple y prolija */
+    .schedule-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+      margin-top: 4px;
+      border: 1px solid #ddd;
+    }
 
-		.schedule-table th,
-		.schedule-table td {
-		  padding: 4px 8px;
-		  border: 1px solid #eee;
-		  vertical-align: top;
-		}
+    .schedule-table th,
+    .schedule-table td {
+      padding: 4px 8px;
+      border: 1px solid #eee;
+      vertical-align: top;
+    }
 
-		/* Encabezados */
-		.schedule-table th {
-		  background: #f7f7f7;
-		  font-weight: 600;
-		  text-align: left;
-		}
+    .schedule-table th {
+      background: #f7f7f7;
+      font-weight: 600;
+      text-align: left;
+    }
 
-		/* Columna "Día" más angosta pero sin apretar el texto */
-		.schedule-table td:first-child {
-		  width: 80px;          /* Fijo, no porcentaje raro */
-		  font-weight: 600;
-		  text-align: left;
-		  white-space: nowrap;  /* "Miércoles" no se corta en dos líneas */
-		}
+    .schedule-table td:first-child {
+      width: 80px;
+      font-weight: 600;
+      text-align: left;
+      white-space: nowrap;
+    }
 
-		/* Columna de horarios ocupa el resto, texto alineado a la izquierda */
-		.schedule-table td:last-child {
-		  text-align: left;
-		}
+    .schedule-table td:last-child {
+      text-align: left;
+    }
 
-		/* Nombres en negrita suave */
-		.schedule-table td strong {
-		  font-weight: 700;
-		}
-
+    .schedule-table td strong {
+      font-weight: 700;
+    }
   </style>
 </head>
 <body>
   <div class="app">
     <h1>👵🏻 TERE - Registro de cuidado</h1>
     <div class="subtitle">
-  <em>
-    Registro diario por turno<br>
-    (comidas, agua, medicación y estado de ánimo)
-  </em>
-</div>
-
+      <em>
+        Registro diario por turno<br>
+        (comidas, agua, medicación y estado de ánimo)
+      </em>
+    </div>
 
     <!-- Datos generales -->
     <div class="card">
@@ -357,6 +408,7 @@
       </div>
       <div class="small-text" id="suggestInfo"></div>
       <div class="saved-message" id="savedMessage"></div>
+      <div class="small-text" id="turnoInfo"></div>
     </div>
 
     <!-- Comidas -->
@@ -388,7 +440,7 @@
 
     <!-- Agua -->
     <div class="card">
-      <h2>💧 Agua (por turno)</h2>
+      <h2>💧 Agua (día completo)</h2>
       <div class="row">
         <label for="aguaVasos">Vasos tomados en el día</label>
         <input type="number" id="aguaVasos" min="0" max="40" step="1" inputmode="numeric">
@@ -471,63 +523,62 @@
       <h2>🗓️​ Calendario de turnos</h2>
       <div class="small-text">Referencia según el cronograma acordado.</div>
       <table class="schedule-table">
-  <thead>
-    <tr>
-      <th>Día</th>
-      <th>Horarios y cuidadores</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Lunes</td>
-      <td>
-        12:00 a 18:00 — <strong>GUADA</strong><br>
-        20:00 a 08:00 — <strong>NOELIA</strong> <small>(hasta el martes)</small>
-      </td>
-    </tr>
-    <tr>
-      <td>Martes</td>
-      <td>
-        12:00 a 16:00 — <strong>AYLÉN</strong><br>
-        21:00 a 12:00 — <strong>GUADA</strong> <small>(hasta el miércoles)</small>
-      </td>
-    </tr>
-    <tr>
-      <td>Miércoles</td>
-      <td>
-        12:00 a 18:00 — <strong>GUADA</strong><br>
-        20:00 a 08:00 — <strong>NOELIA</strong> <small>(hasta el jueves)</small>
-      </td>
-    </tr>
-    <tr>
-      <td>Jueves</td>
-      <td>
-        12:00 a 16:00 — <strong>AYLÉN</strong><br>
-        20:00 a 08:00 — <strong>NOELIA</strong> <small>(hasta el viernes)</small>
-      </td>
-    </tr>
-    <tr>
-      <td>Viernes</td>
-      <td>
-        09:00 a 18:00 — <strong>GUADA</strong><br>
-        20:00 a 08:00 — <strong>NOELIA</strong> <small>(hasta el sábado)</small>
-      </td>
-    </tr>
-    <tr>
-      <td>Sábado</td>
-      <td>
-        20:00 a 08:00 — <strong>ROCÍO</strong> <small>(hasta el domingo)</small>
-      </td>
-    </tr>
-    <tr>
-      <td>Domingo</td>
-      <td>
-        19:00 a 08:00 — <strong>ROCÍO</strong> <small>(hasta el lunes)</small>
-      </td>
-    </tr>
-  </tbody>
-</table>
-
+        <thead>
+          <tr>
+            <th>Día</th>
+            <th>Horarios y cuidadores</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Lunes</td>
+            <td>
+              12:00 a 18:00 — <strong>GUADA</strong><br>
+              20:00 a 08:00 — <strong>NOELIA</strong> <small>(hasta el martes)</small>
+            </td>
+          </tr>
+          <tr>
+            <td>Martes</td>
+            <td>
+              12:00 a 16:00 — <strong>AYLÉN</strong><br>
+              21:00 a 12:00 — <strong>GUADA</strong> <small>(hasta el miércoles)</small>
+            </td>
+          </tr>
+          <tr>
+            <td>Miércoles</td>
+            <td>
+              12:00 a 18:00 — <strong>GUADA</strong><br>
+              20:00 a 08:00 — <strong>NOELIA</strong> <small>(hasta el jueves)</small>
+            </td>
+          </tr>
+          <tr>
+            <td>Jueves</td>
+            <td>
+              12:00 a 16:00 — <strong>AYLÉN</strong><br>
+              20:00 a 08:00 — <strong>NOELIA</strong> <small>(hasta el viernes)</small>
+            </td>
+          </tr>
+          <tr>
+            <td>Viernes</td>
+            <td>
+              09:00 a 18:00 — <strong>GUADA</strong><br>
+              20:00 a 08:00 — <strong>NOELIA</strong> <small>(hasta el sábado)</small>
+            </td>
+          </tr>
+          <tr>
+            <td>Sábado</td>
+            <td>
+              20:00 a 08:00 — <strong>ROCÍO</strong> <small>(hasta el domingo)</small>
+            </td>
+          </tr>
+          <tr>
+            <td>Domingo</td>
+            <td>
+              19:00 a 08:00 — <strong>ROCÍO</strong> <small>(hasta el lunes)</small>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <!-- Exportar (al fondo) -->
@@ -567,6 +618,14 @@
       return await res.json();
     }
 
+    async function apiBorrar(id) {
+      const url = new URL(API_BASE + "/borrar-registro", window.location.origin);
+      url.searchParams.set("id", id);
+      const res = await fetch(url.toString(), { method: "POST" });
+      if (!res.ok) throw new Error("Error al borrar registro");
+      return await res.json();
+    }
+
     const fechaInput       = document.getElementById("fecha");
     const turnoSelect      = document.getElementById("turno");
     const cuidadorSelect   = document.getElementById("cuidador");
@@ -585,6 +644,7 @@
     const resetDiaBtn      = document.getElementById("resetDia");
     const historialLista   = document.getElementById("historialLista");
     const suggestInfo      = document.getElementById("suggestInfo");
+    const turnoInfo        = document.getElementById("turnoInfo");
     const exportDiaBtn     = document.getElementById("exportDia");
 
     const moodOptions      = document.querySelectorAll(".mood-option");
@@ -592,16 +652,9 @@
 
     let saveTimeout = null;
     let lastCuidadorValue = cuidadorSelect.value;
+    let lastTurnoValue    = turnoSelect.value;
 
- 
-async function apiBorrar(id) {
-  const url = new URL(API_BASE + "/borrar-registro", window.location.origin);
-  url.searchParams.set("id", id);
-  const res = await fetch(url.toString(), { method: "POST" });
-  if (!res.ok) throw new Error("Error al borrar registro");
-  return await res.json();
-}
-   const schedule = {
+    const schedule = {
       1: [
         { from: 0,        to: 8 * 60,  cuidador: "rocio"     },
         { from: 12 * 60,  to: 18 * 60, cuidador: "guadalupe" },
@@ -845,6 +898,7 @@ async function apiBorrar(id) {
           medNocheInput.checked   = rec.medNoche;
           notasInput.value        = rec.notas || "";
           setMoodUI(rec.estadoAnimo);
+          turnoInfo.textContent   = "Turno ya registrado. Estás editando la información guardada.";
         } else {
           desayunoInput.checked   = false;
           almuerzoInput.checked   = false;
@@ -855,6 +909,7 @@ async function apiBorrar(id) {
           medNocheInput.checked   = false;
           notasInput.value        = "";
           clearMoodUI();
+          turnoInfo.textContent   = "Turno nuevo para este día y horario.";
         }
         await actualizarEstadosVisuales();
         savedMessage.textContent = "";
@@ -928,7 +983,7 @@ async function apiBorrar(id) {
           if (!daily.desayuno) faltantes.push("desayuno");
           if (!daily.almuerzo) faltantes.push("almuerzo");
           if (!daily.merienda) faltantes.push("merienda");
-          if (!daily.cena) faltantes.push("cena");
+          if (!daily.cena)     faltantes.push("cena");
           partes.push(`⚠️ Faltan comidas por registrar: ${faltantes.join(", ")}.`);
         }
 
@@ -969,92 +1024,190 @@ async function apiBorrar(id) {
           return;
         }
 
-        const agrupados = new Map();
+        // Agrupamos primero por fecha (día)
+        const porDia = new Map();
 
         registros.forEach(rec => {
           const fechaStr = typeof rec.fecha === "string" ? rec.fecha.slice(0, 10) : rec.fecha;
-          const key = `${fechaStr}|${rec.turno}|${rec.cuidador}`;
-          if (!agrupados.has(key)) {
-            agrupados.set(key, rec);
+          if (!porDia.has(fechaStr)) {
+            porDia.set(fechaStr, []);
           }
+          porDia.get(fechaStr).push(rec);
         });
 
-        const condensados = Array.from(agrupados.values());
+        // Ordenamos días de más reciente a más viejo
+        const diasOrdenados = Array.from(porDia.entries()).sort((a, b) => {
+          return a[0] < b[0] ? 1 : -1; // yyyy-mm-dd, orden descendente
+        });
+
         historialLista.innerHTML = "";
 
-        condensados.forEach(rec => {
-          const fechaStr  = typeof rec.fecha === "string" ? rec.fecha.slice(0, 10) : rec.fecha;
-          const comidasCount =
-            (rec.desayuno ? 1 : 0) +
-            (rec.almuerzo ? 1 : 0) +
-            (rec.merienda ? 1 : 0) +
-            (rec.cena ? 1 : 0);
+        diasOrdenados.forEach(([fechaStr, recsDia]) => {
+          // Resumen diario (similar a getDailySummary)
+          let resumenDia = {
+            desayuno: false,
+            almuerzo: false,
+            merienda: false,
+            cena: false,
+            medManiana: false,
+            medNoche: false,
+            aguaVasos: 0,
+            turnos: 0
+          };
 
-          const medCount =
-            (rec.med_maniana ? 1 : 0) +
-            (rec.med_noche ? 1 : 0);
-
-          const agua = rec.agua_vasos ?? 0;
-          const mood = moodEmoji(rec.estado_animo);
-
-          const item   = document.createElement("div");
-          item.className = "history-item";
-
-          const main  = document.createElement("div");
-          main.className = "history-item-main";
-
-          const title = document.createElement("div");
-          title.className = "history-title";
-          title.textContent = `${formatFecha(fechaStr)} · ${labelTurno(rec.turno)}${mood ? " " + mood : ""}`;
-
-          const badge = document.createElement("div");
-          badge.className = "badge";
-          badge.textContent = labelCuidador(rec.cuidador);
-
-          main.appendChild(title);
-          main.appendChild(badge);
-
-          const meta = document.createElement("div");
-          meta.className = "history-meta";
-          meta.textContent = rec.notas
-            ? `Notas: ${rec.notas.slice(0, 60)}${rec.notas.length > 60 ? "..." : ""}`
-            : "Sin notas.";
-
-          const summary = document.createElement("div");
-          summary.className = "history-summary";
-          summary.textContent =
-            `Comidas: ${comidasCount}/4 · Med: ${medCount}/2 · Agua: ${agua} vaso(s)`;
-
-          item.appendChild(main);
-          item.appendChild(summary);
-			  // Botón de borrado
-  const deleteBtn = document.createElement("button");
-  deleteBtn.className = "delete-button";
-  deleteBtn.textContent = "Borrar";
-  deleteBtn.addEventListener("click", async (e) => {
-    e.stopPropagation();
-    try {
-      await apiBorrar(rec.id);
-      await buildHistory();
-    } catch (err) {
-      console.error(err);
-    }
-  });
-  item.appendChild(deleteBtn);
-
-          item.appendChild(meta);
-
-          item.addEventListener("click", () => {
-            fechaInput.value     = fechaStr || hoyISO();
-            turnoSelect.value    = rec.turno || "maniana";
-            cuidadorSelect.value = rec.cuidador || "otro";
-            lastCuidadorValue    = cuidadorSelect.value;
-            suggestInfo.textContent = "";
-            loadCurrentRecord();
-            window.scrollTo({ top: 0, behavior: "smooth" });
+          recsDia.forEach(r => {
+            resumenDia.turnos += 1;
+            if (r.desayuno)    resumenDia.desayuno = true;
+            if (r.almuerzo)    resumenDia.almuerzo = true;
+            if (r.merienda)    resumenDia.merienda = true;
+            if (r.cena)        resumenDia.cena = true;
+            if (r.med_maniana) resumenDia.medManiana = true;
+            if (r.med_noche)   resumenDia.medNoche = true;
+            const agua = r.agua_vasos || 0;
+            if (agua > resumenDia.aguaVasos) resumenDia.aguaVasos = agua;
           });
 
-          historialLista.appendChild(item);
+          const todasComidasDia = resumenDia.desayuno && resumenDia.almuerzo &&
+                                  resumenDia.merienda && resumenDia.cena;
+
+          const estadoComidasDia = todasComidasDia
+            ? "Comidas completas"
+            : "Comidas incompletas";
+
+          let estadoMedDia;
+          if (resumenDia.medManiana && resumenDia.medNoche) {
+            estadoMedDia = "Medicación completa";
+          } else if (resumenDia.medManiana || resumenDia.medNoche) {
+            estadoMedDia = "Medicación incompleta";
+          } else {
+            estadoMedDia = "Sin medicación registrada";
+          }
+
+          const diaContainer = document.createElement("div");
+          diaContainer.className = "history-day";
+
+          const header = document.createElement("div");
+          header.className = "history-day-header";
+          header.textContent = formatFecha(fechaStr);
+
+          const headerSummary = document.createElement("div");
+          headerSummary.className = "history-day-summary";
+          headerSummary.textContent =
+            `${estadoComidasDia} · ${estadoMedDia} · Agua: ${resumenDia.aguaVasos} vaso(s) · Turnos: ${resumenDia.turnos}`;
+
+          header.appendChild(headerSummary);
+          diaContainer.appendChild(header);
+
+          const itemsContainer = document.createElement("div");
+          itemsContainer.className = "history-day-items";
+
+          // Dentro del día, consolidamos por fecha+turno+cuidador para evitar duplicados
+          const agrupados = new Map();
+          recsDia.forEach(rec => {
+            const key = `${rec.turno}|${rec.cuidador}`;
+            if (!agrupados.has(key)) {
+              agrupados.set(key, rec);
+            }
+          });
+
+          const turnosDia = Array.from(agrupados.values());
+
+          // Ordenamos turnos dentro del día (mañana, tarde, noche, completo)
+          const ordenTurno = { maniana: 0, tarde: 1, noche: 2, completo: 3 };
+          turnosDia.sort((a, b) => {
+            const ta = ordenTurno[a.turno] ?? 99;
+            const tb = ordenTurno[b.turno] ?? 99;
+            return ta - tb;
+          });
+
+          turnosDia.forEach(rec => {
+            const comidasCount =
+              (rec.desayuno ? 1 : 0) +
+              (rec.almuerzo ? 1 : 0) +
+              (rec.merienda ? 1 : 0) +
+              (rec.cena ? 1 : 0);
+
+            const medCount =
+              (rec.med_maniana ? 1 : 0) +
+              (rec.med_noche ? 1 : 0);
+
+            const agua = rec.agua_vasos ?? 0;
+            const mood = moodEmoji(rec.estado_animo);
+
+            const item = document.createElement("div");
+            item.className = "history-item";
+
+            // Resaltamos turnos "vacíos" o incompletos
+            const turnoVacio = comidasCount === 0 && medCount === 0;
+            const turnoIncompleto = !turnoVacio && (comidasCount < 4 || medCount < 2);
+
+            if (turnoVacio) {
+              item.classList.add("history-item-empty");
+            } else if (turnoIncompleto) {
+              item.classList.add("history-item-incomplete");
+            }
+
+            const main  = document.createElement("div");
+            main.className = "history-item-main";
+
+            const title = document.createElement("div");
+            title.className = "history-title";
+            title.textContent = `${labelTurno(rec.turno)}${mood ? " " + mood : ""}`;
+
+            const badge = document.createElement("div");
+            badge.className = "badge";
+            badge.textContent = labelCuidador(rec.cuidador);
+
+            main.appendChild(title);
+            main.appendChild(badge);
+
+            const meta = document.createElement("div");
+            meta.className = "history-meta";
+            meta.textContent = rec.notas
+              ? `Notas: ${rec.notas.slice(0, 60)}${rec.notas.length > 60 ? "..." : ""}`
+              : "Sin notas.";
+
+            const summary = document.createElement("div");
+            summary.className = "history-summary";
+            summary.textContent =
+              `Comidas: ${comidasCount}/4 · Med: ${medCount}/2 · Agua: ${agua} vaso(s)`;
+
+            item.appendChild(main);
+            item.appendChild(summary);
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "delete-button";
+            deleteBtn.textContent = "Borrar";
+            deleteBtn.addEventListener("click", async (e) => {
+              e.stopPropagation();
+              try {
+                await apiBorrar(rec.id);
+                await buildHistory();
+                await actualizarEstadosVisuales();
+              } catch (err) {
+                console.error(err);
+              }
+            });
+            item.appendChild(deleteBtn);
+
+            item.appendChild(meta);
+
+            item.addEventListener("click", () => {
+              fechaInput.value     = fechaStr || hoyISO();
+              turnoSelect.value    = rec.turno || "maniana";
+              cuidadorSelect.value = rec.cuidador || "otro";
+              lastCuidadorValue    = cuidadorSelect.value;
+              lastTurnoValue       = turnoSelect.value;
+              suggestInfo.textContent = "";
+              loadCurrentRecord();
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            });
+
+            itemsContainer.appendChild(item);
+          });
+
+          diaContainer.appendChild(itemsContainer);
+          historialLista.appendChild(diaContainer);
         });
       } catch (e) {
         console.error(e);
@@ -1069,6 +1222,7 @@ async function apiBorrar(id) {
       const { minutes } = getNowInfo();
       const turnoGuess = guessTurnoFromMinutes(minutes);
       turnoSelect.value = turnoGuess;
+      lastTurnoValue = turnoGuess;
 
       const scheduled = getScheduledCuidadorForFechaTurno(hoy, turnoGuess);
 
@@ -1095,7 +1249,7 @@ async function apiBorrar(id) {
         const ok = window.confirm(
           `${nombreNuevo} no está programada para este turno.\n` +
           `Según el calendario debería estar ${nombreProgramado}.\n\n` +
-          `¿Confirmás que ${nombreNuevo} está cubriendo el turno?`
+          `¿Confirmás que ${nombreNuevo} está cubriendo el turno de otra persona?`
         );
         if (!ok) {
           cuidadorSelect.value = lastCuidadorValue;
@@ -1107,20 +1261,61 @@ async function apiBorrar(id) {
       suggestInfo.textContent = "";
       await loadCurrentRecord();
     }
-	  
+
+    async function handleTurnoChange() {
+      const fechaSel = fechaInput.value || hoyISO();
+      const turnoSel = turnoSelect.value;
+      const scheduled = getScheduledCuidadorForFechaTurno(fechaSel, turnoSel);
+
+      if (scheduled && cuidadorSelect.value !== "otro" && cuidadorSelect.value !== scheduled) {
+        const nombreProgramado = labelCuidador(scheduled);
+        const nombreActual     = labelCuidador(cuidadorSelect.value);
+
+        const ok = window.confirm(
+          `${nombreActual} no está programada para este turno.\n` +
+          `Según el calendario debería estar ${nombreProgramado}.\n\n` +
+          `¿Confirmás que ${nombreActual} está cubriendo un horario distinto al asignado?`
+        );
+
+        if (!ok) {
+          turnoSelect.value = lastTurnoValue;
+          return;
+        }
+      }
+
+      lastTurnoValue = turnoSel;
+
+      if (scheduled) {
+        suggestInfo.textContent = "Turno y cuidadora verificados según el calendario.";
+      } else {
+        suggestInfo.textContent = "Turno fuera del calendario fijo. Verificá que la persona esté cubriendo este horario.";
+      }
+
+      await loadCurrentRecord();
+    }
 
     async function init() {
+      // Bloquear fechas futuras
+      const hoy = hoyISO();
+      fechaInput.max = hoy;
+
       sugerirTurnoYCuidadorSegunAhora();
       await loadCurrentRecord();
       await buildHistory();
 
       fechaInput.addEventListener("change", () => {
+        const valor = fechaInput.value;
+        const hoyStr = hoyISO();
+        if (valor && valor > hoyStr) {
+          alert("No se pueden registrar turnos en fechas futuras. Se usará la fecha de hoy.");
+          fechaInput.value = hoyStr;
+        }
         suggestInfo.textContent = "";
         loadCurrentRecord();
       });
 
       turnoSelect.addEventListener("change", () => {
-        loadCurrentRecord();
+        handleTurnoChange();
       });
 
       cuidadorSelect.addEventListener("change", () => {
@@ -1162,6 +1357,3 @@ async function apiBorrar(id) {
   </script>
 </body>
 </html>
-
-
-
