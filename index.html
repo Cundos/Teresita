@@ -546,6 +546,29 @@
       <div id="resumenTexto" class="small-text"></div>
     </div>
 
+        <!-- Dashboard resumido -->
+    <div class="card">
+      <h2>📊 Resumen de período</h2>
+      <div class="two-cols">
+        <div class="row">
+          <label for="dashDesde">Desde</label>
+          <input type="date" id="dashDesde">
+        </div>
+        <div class="row">
+          <label for="dashHasta">Hasta</label>
+          <input type="date" id="dashHasta">
+        </div>
+      </div>
+      <button class="export-btn" id="dashActualizar">Actualizar resumen</button>
+
+      <div class="small-text" style="margin-top:8px;" id="dashIndicadores">
+        Seleccioná un rango de fechas y tocá "Actualizar resumen".
+      </div>
+
+      <div id="dashTabla" class="small-text" style="margin-top:8px; overflow-x:auto;"></div>
+    </div>
+
+    
     <!-- Historial -->
     <div class="card">
       <h2>Historial reciente</h2>
@@ -1450,3 +1473,4 @@
   </script>
 </body>
 </html>
+
