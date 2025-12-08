@@ -141,6 +141,17 @@
       color: #8a0000;
     }
 
+    .day-status-panel {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .day-status-icon {
+      font-size: 1.4rem;
+    }
+
     .small-text {
       font-size: 0.8rem;
       color: #666;
@@ -158,15 +169,21 @@
       color: #19692c;
       text-align: right;
       min-height: 1em;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .saved-message.visible {
+      opacity: 1;
     }
 
     button.reset-btn {
       width: 100%;
       margin-top: 6px;
-      padding: 9px;
+      padding: 11px;
       border-radius: 999px;
       border: none;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       background: #ffe5e5;
       color: #a00000;
       cursor: pointer;
@@ -179,10 +196,10 @@
     button.export-btn {
       width: 100%;
       margin-top: 8px;
-      padding: 9px;
+      padding: 11px;
       border-radius: 999px;
       border: none;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       background: #e6f0ff;
       color: #003f8c;
       cursor: pointer;
@@ -197,7 +214,7 @@
       margin-top: 4px;
       align-self: flex-end;
       font-size: 0.7rem;
-      padding: 4px 8px;
+      padding: 5px 9px;
       border-radius: 999px;
       border: none;
       background: #ffe5e5;
@@ -311,17 +328,19 @@
 
     .mood-option {
       flex: 1;
-      border-radius: 10px;
+      border-radius: 12px;
       border: 1px solid #ddd;
-      padding: 8px 4px;
+      padding: 9px 4px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 2px;
+      gap: 3px;
       font-size: 0.8rem;
       cursor: pointer;
       user-select: none;
       background: #fafafa;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
     }
 
     .mood-option input {
@@ -331,10 +350,12 @@
     .mood-option.selected {
       border-color: #19692c;
       background: #e5f7ea;
+      transform: translateY(-1px) scale(1.02);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.08);
     }
 
     .mood-emoji {
-      font-size: 1.6rem;
+      font-size: 1.7rem;
       line-height: 1;
     }
 
@@ -517,10 +538,11 @@
 
     <!-- Estado general día -->
     <div class="card">
-      <h2>
-        Resumen rápido del día
+      <h2>Resumen rápido del día</h2>
+      <div class="day-status-panel">
+        <span class="day-status-icon">🩺</span>
         <span id="statusDia" class="status-pill"></span>
-      </h2>
+      </div>
       <div id="resumenTexto" class="small-text"></div>
     </div>
 
@@ -825,10 +847,26 @@
       }
     }
 
+    function getHoraDesdeRec(rec) {
+      const raw = rec.created_at || rec.hora || rec.fecha_hora;
+      if (!raw) return "";
+      const date = new Date(raw);
+      if (isNaN(date.getTime())) return "";
+      const hh = String(date.getHours()).padStart(2, "0");
+      const mm = String(date.getMinutes()).padStart(2, "0");
+      return `${hh}:${mm} hs`;
+    }
+
     function mostrarGuardado() {
-      savedMessage.textContent = "Guardado en TERE ✅";
+      const ahora = new Date();
+      const hh = String(ahora.getHours()).padStart(2, "0");
+      const mm = String(ahora.getMinutes()).padStart(2, "0");
+      savedMessage.textContent = `Guardado en TERE ✅ ${hh}:${mm}`;
+      savedMessage.classList.add("visible");
       if (saveTimeout) clearTimeout(saveTimeout);
-      saveTimeout = setTimeout(() => { savedMessage.textContent = ""; }, 1500);
+      saveTimeout = setTimeout(() => {
+        savedMessage.classList.remove("visible");
+      }, 1500);
     }
 
     async function fetchRecordForCurrentKey() {
@@ -940,7 +978,6 @@
           turnoInfo.textContent   = "Turno nuevo para este día y horario.";
         }
         await actualizarEstadosVisuales();
-        savedMessage.textContent = "";
       } catch (e) {
         console.error(e);
       }
@@ -1027,11 +1064,12 @@
           partes.push("💧 No se registró agua para este día.");
         }
 
-       if (daily.turnos > 0) {
+        if (daily.turnos > 0) {
           partes.push(`📋 Turnos registrados en el día: ${daily.turnos}.`);
         } else {
           partes.push("📋 Aún no hay turnos registrados para este día.");
         }
+
         resumenTexto.textContent = partes.join(" ");
 
         // Estado general del día (pill)
@@ -1179,6 +1217,7 @@
 
             const agua = rec.agua_vasos ?? 0;
             const mood = moodEmoji(rec.estado_animo);
+            const hora = getHoraDesdeRec(rec);
 
             const item = document.createElement("div");
             item.className = "history-item";
@@ -1202,7 +1241,9 @@
 
             const badge = document.createElement("div");
             badge.className = "badge";
-            badge.textContent = labelCuidador(rec.cuidador);
+            badge.textContent = hora
+              ? `${labelCuidador(rec.cuidador)} · ${hora}`
+              : labelCuidador(rec.cuidador);
 
             main.appendChild(title);
             main.appendChild(badge);
@@ -1358,10 +1399,11 @@
           alert("No se pueden registrar turnos en fechas futuras. Se usará la fecha de hoy.");
           fechaInput.value = hoy;
         }
+        const actual = fechaInput.value || hoy;
         suggestInfo.textContent = "";
         currentDateLabel.textContent =
-          valor && valor <= hoy ? "Día seleccionado: " + formatFecha(valor)
-                                : "Hoy: " + formatFecha(hoy);
+          actual && actual <= hoy ? "Día seleccionado: " + formatFecha(actual)
+                                  : "Hoy: " + formatFecha(hoy);
         loadCurrentRecord();
       });
 
@@ -1408,4 +1450,3 @@
   </script>
 </body>
 </html>
-
