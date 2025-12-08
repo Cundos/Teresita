@@ -26,7 +26,6 @@
       max-width: 480px;
       margin: 0 auto;
       padding: 16px;
-      /* ya no hace falta espacio extra para barra flotante */
       padding-bottom: 16px;
     }
 
@@ -652,8 +651,8 @@
       </table>
     </div>
 
-    <!-- 📊 Resumen de período -->
-    <div class="card">
+    <!-- 📊 Resumen de período (solo modo familia / lectura) -->
+    <div class="card" id="card-resumen-periodo" style="display:none;">
       <h2>📊 Resumen de período</h2>
       <div class="two-cols">
         <div class="row">
@@ -674,8 +673,8 @@
       <div id="dashTabla" class="small-text" style="margin-top:8px; overflow-x:auto;"></div>
     </div>
 
-    <!-- Exportar (al fondo) -->
-    <div class="card">
+    <!-- Exportar (solo modo familia / lectura) -->
+    <div class="card" id="card-exportar" style="display:none;">
       <h2>Exportar registros</h2>
       <button class="export-btn" id="exportDia">⬇️ Exportar día a Excel / Sheets</button>
       <div class="small-text">Genera un CSV con todos los turnos del día seleccionado.</div>
@@ -689,7 +688,7 @@
   <script>
     const API_BASE = "/api";
 
-    // 🔒 Modo lectura vía ?view=readonly
+    // 🔒 Modo lectura vía ?view=readonly (modo familia)
     const params = new URLSearchParams(window.location.search);
     const READ_ONLY = params.get("view") === "readonly";
 
@@ -834,6 +833,9 @@
     const dashActualizarBtn= document.getElementById("dashActualizar");
     const dashIndicadores  = document.getElementById("dashIndicadores");
     const dashTabla        = document.getElementById("dashTabla");
+
+    const cardResumenPeriodo = document.getElementById("card-resumen-periodo");
+    const cardExportar       = document.getElementById("card-exportar");
 
     const moodOptions      = document.querySelectorAll(".mood-option");
     const moodRadios       = document.querySelectorAll('input[name="estadoAnimo"]');
@@ -1675,7 +1677,7 @@
     function autoActualizarSegunReloj() {
       const hoy = hoyISO();
       const fechaSel = fechaInput.value || hoy;
-      if (fechaSel !== hoy) return; // Sólo si estamos parados en el día de hoy
+      if (fechaSel !== hoy) return;
 
       const { dow, minutes } = getNowInfo();
       const turnoGuess = guessTurnoFromMinutes(minutes);
@@ -1765,6 +1767,15 @@
 
       currentDateLabel.textContent = "Hoy: " + formatFecha(hoyStr);
 
+      // Mostrar/ocultar tarjetas de "modo familia"
+      if (READ_ONLY) {
+        if (cardResumenPeriodo) cardResumenPeriodo.style.display = "";
+        if (cardExportar)       cardExportar.style.display = "";
+      } else {
+        if (cardResumenPeriodo) cardResumenPeriodo.style.display = "none";
+        if (cardExportar)       cardExportar.style.display = "none";
+      }
+
       // Banner de modo lectura
       if (READ_ONLY) {
         const subtitle = document.querySelector(".subtitle");
@@ -1772,7 +1783,7 @@
         banner.className = "small-text";
         banner.style.textAlign = "center";
         banner.style.marginBottom = "10px";
-        banner.textContent = "🔒 Modo lectura: sólo consulta. No se pueden modificar ni borrar registros desde este enlace.";
+        banner.textContent = "🔒 Modo lectura (familia): sólo consulta. No se pueden modificar ni borrar registros desde este enlace.";
         subtitle.insertAdjacentElement("afterend", banner);
 
         [
@@ -1839,21 +1850,21 @@
 
         resetDiaBtn.addEventListener("click", () => { resetCurrentRecord(); });
 
-        // Auto-ajuste cada 60 segundos según la hora del dispositivo
         setInterval(() => {
           autoActualizarSegunReloj();
         }, 60000);
       } else {
-        // En modo lectura, el clic en estado de ánimo no debe cambiar nada
         moodOptions.forEach(opt => {
           opt.addEventListener("click", () => {});
         });
       }
 
-      exportDiaBtn.addEventListener("click", () => {
-        const fecha = fechaInput.value || hoyISO();
-        exportarCsvDia(fecha);
-      });
+      if (exportDiaBtn) {
+        exportDiaBtn.addEventListener("click", () => {
+          const fecha = fechaInput.value || hoyISO();
+          exportarCsvDia(fecha);
+        });
+      }
 
       if (dashDesdeInput && dashHastaInput && dashActualizarBtn) {
         const hoy = hoyISO();
