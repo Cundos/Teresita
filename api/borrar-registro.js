@@ -1,27 +1,34 @@
-import { sql } from '@vercel/postgres';
+// api/borrar-registro.js
+const { getPool } = require("./db.js");
 
-export default async function handler(request, response) {
+module.exports = async (req, res) => {
   try {
-    if (request.method !== 'DELETE' && request.method !== 'POST') {
-      return response.status(405).json({ error: 'Método no permitido' });
+    // Vercel pasa los query params en req.query
+    const { id } = req.query || {};
+
+    const parsedId = parseInt(id, 10);
+    if (!parsedId || Number.isNaN(parsedId)) {
+      return res.status(400).json({
+        ok: false,
+        error: "Parámetro 'id' inválido o ausente"
+      });
     }
 
-    const id = request.query.id || (request.body && request.body.id);
-    
-    if (!id) {
-      return response.status(400).json({ error: 'ID es requerido' });
-    }
+    const pool = getPool();
+    const result = await pool.query(
+      "DELETE FROM registros_cuidado WHERE id = $1",
+      [parsedId]
+    );
 
-    // Ejecutamos el borrado usando la librería nueva
-    const result = await sql`DELETE FROM registros WHERE id = ${id}`;
-
-    if (result.rowCount === 0) {
-      return response.status(404).json({ error: 'Registro no encontrado' });
-    }
-    
-    return response.status(200).json({ ok: true });
-  } catch (error) {
-    console.error('Error deleting:', error);
-    return response.status(500).json({ error: error.message });
+    return res.status(200).json({
+      ok: true,
+      deleted: result.rowCount
+    });
+  } catch (err) {
+    console.error("Error en borrar-registro:", err);
+    return res.status(500).json({
+      ok: false,
+      error: err.message
+    });
   }
-}
+};
