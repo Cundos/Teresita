@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>TERES APP</title>
+  <title>TERESISTA APP</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- Favicon emoji 👵🏻 -->
@@ -209,7 +209,6 @@
       opacity: 0.85;
     }
 
-    /* Botón borrar historial */
     .delete-button {
       margin-top: 4px;
       align-self: flex-end;
@@ -363,7 +362,7 @@
       font-size: 0.8rem;
     }
 
-    /* Calendario de turnos – versión simple y prolija */
+    /* Calendario de turnos */
     .schedule-table {
       width: 100%;
       border-collapse: collapse;
@@ -568,28 +567,6 @@
       <div id="resumenTexto" class="small-text"></div>
     </div>
 
-    <!-- Dashboard resumido -->
-    <div class="card">
-      <h2>📊 Resumen de período</h2>
-      <div class="two-cols">
-        <div class="row">
-          <label for="dashDesde">Desde</label>
-          <input type="date" id="dashDesde">
-        </div>
-        <div class="row">
-          <label for="dashHasta">Hasta</label>
-          <input type="date" id="dashHasta">
-        </div>
-      </div>
-      <button class="export-btn" id="dashActualizar">Actualizar resumen</button>
-
-      <div class="small-text" style="margin-top:8px;" id="dashIndicadores">
-        Seleccioná un rango de fechas y tocá "Actualizar resumen".
-      </div>
-
-      <div id="dashTabla" class="small-text" style="margin-top:8px; overflow-x:auto;"></div>
-    </div>
-
     <!-- Historial -->
     <div class="card">
       <h2>Historial reciente</h2>
@@ -673,6 +650,28 @@
       </table>
     </div>
 
+    <!-- 📊 Resumen de período (debajo del calendario) -->
+    <div class="card">
+      <h2>📊 Resumen de período</h2>
+      <div class="two-cols">
+        <div class="row">
+          <label for="dashDesde">Desde</label>
+          <input type="date" id="dashDesde">
+        </div>
+        <div class="row">
+          <label for="dashHasta">Hasta</label>
+          <input type="date" id="dashHasta">
+        </div>
+      </div>
+      <button class="export-btn" id="dashActualizar">Actualizar resumen</button>
+
+      <div class="small-text" style="margin-top:8px;" id="dashIndicadores">
+        Seleccioná un rango de fechas y tocá "Actualizar resumen".
+      </div>
+
+      <div id="dashTabla" class="small-text" style="margin-top:8px; overflow-x:auto;"></div>
+    </div>
+
     <!-- Exportar (al fondo) -->
     <div class="card">
       <h2>Exportar registros</h2>
@@ -685,7 +684,8 @@
     </div>
   </div>
 
-  <  <script>
+  <!-- SCRIPT COMPLETO (incluye export CSV en cliente y dashboard) -->
+  <script>
     const API_BASE = "/api";
 
     async function apiGuardar(record) {
@@ -1763,13 +1763,11 @@
 
       resetDiaBtn.addEventListener("click", () => { resetCurrentRecord(); });
 
-      // 🔁 Exportar día: ahora desde el cliente
       exportDiaBtn.addEventListener("click", () => {
         const fecha = fechaInput.value || hoyISO();
         exportarCsvDia(fecha);
       });
 
-      // Dashboard: valores por defecto y botón
       if (dashDesdeInput && dashHastaInput && dashActualizarBtn) {
         const hoy = hoyISO();
         dashDesdeInput.value = hoy;
@@ -1785,7 +1783,5 @@
       init();
     });
   </script>
-
 </body>
 </html>
-
