@@ -158,6 +158,28 @@
       color: #666;
     }
 
+    .tab-switch {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.tab-btn {
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid #ccc;
+  background: #f5f5f5;
+  cursor: pointer;
+}
+
+.tab-btn.active {
+  background: #003f8c;
+  color: #fff;
+  border-color: #003f8c;
+}
+
+
     .footer-info {
       text-align: center;
       font-size: 0.75rem;
@@ -435,8 +457,85 @@
     <div id="currentDateLabel" class="date-label"></div>
 
     <!-- Datos generales -->
-    <div class="card">
-      <h2>📅 Datos del turno</h2>
+<div class="card">
+  <h2>
+    <span>📅 Datos del turno</span>
+    <div class="tab-switch">
+      <button type="button" class="tab-btn active" id="tabTurno">Turno</button>
+      <button type="button" class="tab-btn" id="tabLista">Lista 🛒</button>
+    </div>
+  </h2>
+
+  <!-- Panel 1: formulario del turno (lo que ya tenías) -->
+  <div id="panelTurno">
+    <div class="two-cols">
+      <div class="row">
+        <label for="fecha">Fecha</label>
+        <input type="date" id="fecha">
+      </div>
+      <div class="row">
+        <label for="turno">Turno</label>
+        <select id="turno">
+          <option value="maniana">Mañana</option>
+          <option value="tarde">Tarde</option>
+          <option value="noche">Noche</option>
+          <option value="completo">24 hs</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <label for="cuidador">Cuidadora</label>
+      <select id="cuidador">
+        <option value="guadalupe">Guadalupe</option>
+        <option value="aylen">Aylén</option>
+        <option value="noelia">Noelia</option>
+        <option value="rocio">Rocío</option>
+        <option value="otro">Familiar / Otro</option>
+      </select>
+    </div>
+    <div class="small-text" id="suggestInfo"></div>
+    <div class="saved-message" id="savedMessage"></div>
+    <div class="small-text" id="turnoInfo"></div>
+
+    <!-- botón que ya usábamos -->
+    <button type="button" class="small-chip" id="btnTurnoAhora" style="margin-top:6px;">
+      Turno en curso
+    </button>
+  </div>
+
+  <!-- Panel 2: pestaña Lista de compras (por ahora solo estructura) -->
+  <div id="panelLista" style="display:none; margin-top:4px;">
+    <div class="small-text" style="margin-bottom:6px;">
+      Usá esta pestaña para ir anotando lo que falte comprar. Más adelante lo conectamos a la base para que se vea en todos los dispositivos.
+    </div>
+
+    <div class="row">
+      <label for="listaCategoria">Categoría</label>
+      <select id="listaCategoria">
+        <option value="almacen">Almacén</option>
+        <option value="verduleria">Verdulería</option>
+        <option value="carniceria">Carnicería</option>
+        <option value="otro">Otro</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <label for="listaItem">Producto</label>
+      <input type="text" id="listaItem" placeholder="Ej: yogur bebible">
+    </div>
+
+    <div class="row">
+      <label for="listaCantidad">Cantidad</label>
+      <input type="text" id="listaCantidad" placeholder="Ej: 1 unidad, 1 paquete">
+    </div>
+
+    <button type="button" class="export-btn" id="listaAgregar">➕ Agregar a la lista</button>
+
+    <div class="small-text" style="margin-top:8px;">Pendientes (solo en este dispositivo, por ahora):</div>
+    <ul id="listaPendientes" class="small-text" style="margin-top:4px; padding-left:18px;"></ul>
+  </div>
+</div>
+
       <div class="two-cols">
         <div class="row">
           <label for="fecha">Fecha</label>
@@ -827,7 +926,21 @@
     const turnoInfo        = document.getElementById("turnoInfo");
     const exportDiaBtn     = document.getElementById("exportDia");
     const currentDateLabel = document.getElementById("currentDateLabel");
+    const tabTurno      = document.getElementById("tabTurno");
+    const tabLista      = document.getElementById("tabLista");
+    const panelTurno    = document.getElementById("panelTurno");
+    const panelLista    = document.getElementById("panelLista");
+    
+    const listaCategoria   = document.getElementById("listaCategoria");
+    const listaItem        = document.getElementById("listaItem");
+    const listaCantidad    = document.getElementById("listaCantidad");
+    const listaAgregarBtn  = document.getElementById("listaAgregar");
+    const listaPendientes  = document.getElementById("listaPendientes");
 
+    // Por ahora lista en memoria (se borra al recargar la página)
+    let listaPendientesData = [];
+
+    
     const dashDesdeInput   = document.getElementById("dashDesde");
     const dashHastaInput   = document.getElementById("dashHasta");
     const dashActualizarBtn= document.getElementById("dashActualizar");
@@ -1776,6 +1889,37 @@
         if (cardExportar)       cardExportar.style.display = "none";
       }
 
+      function activarTabTurno() {
+      tabTurno.classList.add("active");
+      tabLista.classList.remove("active");
+      panelTurno.style.display = "";
+      panelLista.style.display = "none";
+    }
+    
+    function activarTabLista() {
+      tabLista.classList.add("active");
+      tabTurno.classList.remove("active");
+      panelTurno.style.display = "none";
+      panelLista.style.display = "";
+    }
+    
+    function renderListaPendientes() {
+      if (!listaPendientes) return;
+    
+      if (listaPendientesData.length === 0) {
+        listaPendientes.innerHTML = "<li>No hay pendientes por ahora.</li>";
+        return;
+      }
+    
+      listaPendientes.innerHTML = "";
+      listaPendientesData.forEach((item, idx) => {
+        const li = document.createElement("li");
+        li.textContent = `${item.categoriaLabel}: ${item.cantidad} ${item.nombre}`;
+        listaPendientes.appendChild(li);
+      });
+    }
+
+
       // Banner de modo lectura
       if (READ_ONLY) {
         const subtitle = document.querySelector(".subtitle");
@@ -1879,9 +2023,53 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       init();
+
+// Tabs Turno / Lista
+if (tabTurno && tabLista && panelTurno && panelLista) {
+  tabTurno.addEventListener("click", activarTabTurno);
+  tabLista.addEventListener("click", activarTabLista);
+  activarTabTurno(); // por las dudas
+}
+
+// Lista de compras (local, solo prueba visual por ahora)
+if (listaAgregarBtn && listaCategoria && listaItem && listaCantidad) {
+  listaAgregarBtn.addEventListener("click", () => {
+    const cat = listaCategoria.value || "otro";
+    const nombre = (listaItem.value || "").trim();
+    const cantidad = (listaCantidad.value || "").trim() || "1";
+
+    if (!nombre) {
+      alert("Escribí qué hay que comprar.");
+      return;
+    }
+
+    const catLabelMap = {
+      almacen: "Almacén",
+      verduleria: "Verdulería",
+      carniceria: "Carnicería",
+      otro: "Otro"
+    };
+
+    listaPendientesData.push({
+      categoria: cat,
+      categoriaLabel: catLabelMap[cat] || "Otro",
+      nombre,
+      cantidad
+    });
+
+    listaItem.value = "";
+    listaCantidad.value = "";
+    renderListaPendientes();
+  });
+
+  renderListaPendientes();
+}
+
+      
     });
   </script>
 </body>
 </html>
+
 
 
