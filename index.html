@@ -1647,26 +1647,31 @@
       dashTabla.innerHTML = tablaHTML;
     }
 
-    function sugerirTurnoYCuidadorSegunAhora() {
-      const hoy = hoyISO();
-      fechaInput.value = hoy;
+  function sugerirTurnoYCuidadorSegunAhora() {
+  const hoy = hoyISO();
+  fechaInput.value = hoy;
 
-      const { minutes } = getNowInfo();
-      const turnoGuess = guessTurnoFromMinutes(minutes);
-      turnoSelect.value = turnoGuess;
-      lastTurnoValue = turnoGuess;
+  // Tomamos día de la semana y minutos REALES del dispositivo
+  const { dow, minutes } = getNowInfo();
 
-      const scheduled = getScheduledCuidadorForFechaTurno(hoy, turnoGuess);
+  // El turno lo seguimos deduciendo por franja horaria
+  const turnoGuess = guessTurnoFromMinutes(minutes);
+  turnoSelect.value = turnoGuess;
+  lastTurnoValue = turnoGuess;
 
-      if (scheduled) {
-        cuidadorSelect.value = scheduled;
-        suggestInfo.textContent = "Cuidadora sugerida automáticamente según calendario del turno.";
-      } else {
-        suggestInfo.textContent = "Fuera de un turno fijo: seleccionar cuidadora manualmente.";
-      }
+  // 🔁 Pero la cuidadora ahora se obtiene con la hora real,
+  // no con una hora "representativa" del turno
+  const scheduled = getCaregiverFor(dow, minutes);
 
-      lastCuidadorValue = cuidadorSelect.value;
-    }
+  if (scheduled) {
+    cuidadorSelect.value = scheduled;
+    suggestInfo.textContent = "Cuidadora sugerida automáticamente según el horario actual del dispositivo.";
+  } else {
+    suggestInfo.textContent = "Fuera de un turno fijo: seleccionar cuidadora manualmente.";
+  }
+
+  lastCuidadorValue = cuidadorSelect.value;
+}
 
     async function handleCuidadorChange() {
       const newValue = cuidadorSelect.value;
@@ -1837,4 +1842,5 @@
   </script>
 </body>
 </html>
+
 
