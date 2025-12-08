@@ -1027,12 +1027,11 @@
           partes.push("💧 No se registró agua para este día.");
         }
 
-        if (daily.turnos > 0) {
+       if (daily.turnos > 0) {
           partes.push(`📋 Turnos registrados en el día: ${daily.turnos}.`);
         } else {
-          partes.push("📋 Aún no hay turnos registrados para este día.`);
+          partes.push("📋 Aún no hay turnos registrados para este día.");
         }
-
         resumenTexto.textContent = partes.join(" ");
 
         // Estado general del día (pill)
@@ -1409,3 +1408,4 @@
   </script>
 </body>
 </html>
+
