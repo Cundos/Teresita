@@ -26,7 +26,8 @@
       max-width: 480px;
       margin: 0 auto;
       padding: 16px;
-      padding-bottom: 64px; /* espacio para la barra inferior */
+      /* ya no hace falta espacio extra para barra flotante */
+      padding-bottom: 16px;
     }
 
     h1 {
@@ -421,57 +422,6 @@
       background: #f7f7f7;
       font-weight: 600;
     }
-
-    /* Barra inferior fija de acciones */
-    .bottom-bar {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      display: flex;
-      justify-content: center;
-      padding: 6px 8px;
-      z-index: 50;
-      background: linear-gradient(to top, rgba(245,245,245,0.98), rgba(245,245,245,0.9));
-      backdrop-filter: blur(4px);
-      border-top: 1px solid #ddd;
-    }
-
-    @supports not ((backdrop-filter: blur(4px))) {
-      .bottom-bar {
-        background: #f5f5f5;
-      }
-    }
-
-    .bottom-bar-inner {
-      width: 100%;
-      max-width: 480px;
-      display: flex;
-      gap: 8px;
-    }
-
-    .bottom-btn {
-      flex: 1;
-      border-radius: 999px;
-      border: none;
-      padding: 9px;
-      font-size: 0.85rem;
-      cursor: pointer;
-    }
-
-    .bottom-btn.primary {
-      background: #e6f0ff;
-      color: #003f8c;
-    }
-
-    .bottom-btn.danger {
-      background: #ffe5e5;
-      color: #a00000;
-    }
-
-    .bottom-btn:active {
-      opacity: .85;
-    }
   </style>
 </head>
 <body>
@@ -736,14 +686,6 @@
     </div>
   </div>
 
-  <!-- Barra inferior fija -->
-  <div class="bottom-bar" id="bottomBar">
-    <div class="bottom-bar-inner">
-      <button class="bottom-btn danger" id="bottomResetBtn">Borrar turno</button>
-      <button class="bottom-btn primary" id="bottomExportBtn">Exportar día</button>
-    </div>
-  </div>
-
   <script>
     const API_BASE = "/api";
 
@@ -892,10 +834,6 @@
     const dashActualizarBtn= document.getElementById("dashActualizar");
     const dashIndicadores  = document.getElementById("dashIndicadores");
     const dashTabla        = document.getElementById("dashTabla");
-
-    const bottomBar        = document.getElementById("bottomBar");
-    const bottomResetBtn   = document.getElementById("bottomResetBtn");
-    const bottomExportBtn  = document.getElementById("bottomExportBtn");
 
     const moodOptions      = document.querySelectorAll(".mood-option");
     const moodRadios       = document.querySelectorAll('input[name="estadoAnimo"]');
@@ -1849,7 +1787,6 @@
         ].forEach(el => el.disabled = true);
 
         resetDiaBtn.style.display = "none";
-        if (bottomBar) bottomBar.style.display = "none";
       }
 
       sugerirTurnoYCuidadorSegunAhora();
@@ -1901,16 +1838,6 @@
         });
 
         resetDiaBtn.addEventListener("click", () => { resetCurrentRecord(); });
-
-        // Barra inferior: acciones rápidas
-        if (bottomResetBtn && bottomExportBtn) {
-          bottomResetBtn.addEventListener("click", () => {
-            resetDiaBtn.click();
-          });
-          bottomExportBtn.addEventListener("click", () => {
-            exportDiaBtn.click();
-          });
-        }
 
         // Auto-ajuste cada 60 segundos según la hora del dispositivo
         setInterval(() => {
