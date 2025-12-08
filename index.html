@@ -688,7 +688,7 @@
   <script>
     const API_BASE = "/api";
 
-    // 🔒 Modo lectura vía ?view=readonly (modo familia)
+    // 🔒 Modo lectura vía ?view=readonly (link para familia)
     const params = new URLSearchParams(window.location.search);
     const READ_ONLY = params.get("view") === "readonly";
 
@@ -994,7 +994,8 @@
       if (isNaN(date.getTime())) return "";
       const hh = String(date.getHours()).padStart(2, "0");
       const mm = String(date.getMinutes()).padStart(2, "0");
-      return `${hh}:${mm} hs`;
+      // 👇 Ajuste: hora simple, sin "hs"
+      return `${hh}:${mm}`;
     }
 
     function mostrarGuardado() {
@@ -1702,7 +1703,7 @@
       }
     }
 
-    // ⚠️ Ajustado: siempre avisa cuando NO coincide con el calendario
+    // Aviso cuando cuidadora no coincide con calendario
     async function handleCuidadorChange() {
       const newValue = cuidadorSelect.value;
       const fechaSel = fechaInput.value || hoyISO();
@@ -1730,7 +1731,7 @@
       await loadCurrentRecord();
     }
 
-    // ⚠️ Ajustado: también avisa al cambiar turno si la cuidadora no coincide
+    // Aviso al cambiar turno si cuidadora no coincide
     async function handleTurnoChange() {
       const fechaSel = fechaInput.value || hoyISO();
       const turnoSel = turnoSelect.value;
