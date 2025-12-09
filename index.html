@@ -48,6 +48,13 @@
       margin-bottom: 12px;
     }
 
+    .familia-banner {
+      text-align: center;
+      font-size: 0.8rem;
+      color: #003f8c;
+      margin-bottom: 4px;
+    }
+
     .card {
       background: #fff;
       border-radius: 12px;
@@ -191,10 +198,10 @@
 
     .small-chip {
       font-size: 0.75rem;
-      padding: 2px 8px;
+      padding: 3px 8px;
       border-radius: 999px;
       border: 1px solid #ccc;
-      background: #f7f7f7;
+      background: #f5f5f5;
       cursor: pointer;
     }
 
@@ -387,12 +394,9 @@
       flex: 1;
     }
 
-    .lista-cat {
-      font-weight: 600;
-    }
-
     .lista-accion {
       white-space: nowrap;
+      font-size: 0.7rem;
     }
 
     .lista-btn-small {
@@ -418,6 +422,10 @@
         Registro diario por turno<br />
         (comidas, agua, medicación y estado de ánimo)
       </em>
+    </div>
+
+    <div class="familia-banner" id="familiaBanner" style="display:none;">
+      👨‍👩‍👧 Vista familia (solo lectura). Para cargar o editar turnos, usá el enlace de cuidadoras.
     </div>
     <div class="today-label" id="currentDateLabel"></div>
 
@@ -497,6 +505,14 @@
 
         <div class="small-text" style="margin-top:8px;">Pendientes:</div>
         <div id="listaPendientes" class="small-text" style="margin-top:4px;"></div>
+
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-top:10px;">
+          <div class="small-text">Comprados recientemente:</div>
+          <button type="button" class="lista-btn-small" id="btnLimpiarComprados">
+            🧹 Limpiar
+          </button>
+        </div>
+        <div id="listaComprados" class="small-text" style="margin-top:4px;"></div>
       </div>
     </div>
 
@@ -591,9 +607,9 @@
       <button class="reset-btn" id="resetDia">Borrar registro de este turno</button>
     </div>
 
-    <!-- Estado general día -->
+    <!-- Dashboard / resumen del día -->
     <div class="card">
-      <h2>Resumen rápido del día</h2>
+      <h2>📊 Dashboard del día</h2>
       <div id="resumenTexto" class="small-text"></div>
     </div>
 
@@ -602,8 +618,7 @@
       <h2>Historial reciente</h2>
       <div class="small-text">
         Ver últimos turnos registrados. Tocá un ítem para cargarlo en el formulario.<br />
-        El resumen se consolida por día (comidas, medicación y agua).<br />
-        <span>⬜ Turno vacío &nbsp;&nbsp; ⬜ Turno incompleto</span>
+        El resumen se consolida por día (comidas, medicación y agua).
       </div>
       <div id="historialLista" class="history-list"></div>
     </div>
@@ -672,7 +687,7 @@
     </div>
 
     <!-- Exportar -->
-    <div class="card">
+    <div class="card" id="exportCard">
       <h2>Exportar registros</h2>
       <button class="export-btn" id="exportDia">⬇️ Exportar día a Excel / Sheets</button>
       <div class="small-text">Genera un CSV con todos los turnos del día seleccionado.</div>
@@ -687,6 +702,12 @@
     const API_BASE = "/api";
     const DELETE_PIN = "1905";
 
+    // Modo familia / solo lectura
+    const params = new URLSearchParams(window.location.search);
+    const viewParam = params.get("view");
+    const isFamiliaView = viewParam === "familia" || viewParam === "readonly";
+
+    // --- API helpers turno ---
     async function apiGuardar(record) {
       const res = await fetch(API_BASE + "/guardar-registro", {
         method: "POST",
@@ -694,11 +715,7 @@
         body: JSON.stringify(record),
       });
       if (!res.ok) throw new Error("Error al guardar registro");
-      try {
-        return await res.json();
-      } catch {
-        return {};
-      }
+      try { return await res.json(); } catch { return {}; }
     }
 
     async function apiListar(params = {}) {
@@ -721,12 +738,12 @@
       return await res.json();
     }
 
-    /* API lista de compras */
+    // --- API lista compras ---
     async function apiComprasListar() {
       const url = new URL(API_BASE + "/compras-listar", window.location.origin);
       const res = await fetch(url.toString());
       if (!res.ok) throw new Error("Error al listar compras");
-      return await res.json(); // se espera array de items
+      return await res.json();
     }
 
     async function apiComprasAgregar(item) {
@@ -749,85 +766,93 @@
       return await res.json();
     }
 
-    /* DOM refs */
+    // --- DOM refs ---
     const currentDateLabel = document.getElementById("currentDateLabel");
+    const familiaBanner = document.getElementById("familiaBanner");
 
-    const fechaInput = document.getElementById("fecha");
-    const turnoSelect = document.getElementById("turno");
-    const cuidadorSelect = document.getElementById("cuidador");
+    const fechaInput       = document.getElementById("fecha");
+    const turnoSelect      = document.getElementById("turno");
+    const cuidadorSelect   = document.getElementById("cuidador");
+    const desayunoInput    = document.getElementById("desayuno");
+    const almuerzoInput    = document.getElementById("almuerzo");
+    const meriendaInput    = document.getElementById("merienda");
+    const cenaInput        = document.getElementById("cena");
+    const aguaInput        = document.getElementById("aguaVasos");
+    const medManianaInput  = document.getElementById("medManiana");
+    const medNocheInput    = document.getElementById("medNoche");
+    const notasInput       = document.getElementById("notas");
+    const statusComidas    = document.getElementById("statusComidas");
+    const statusMed        = document.getElementById("statusMed");
+    const resumenTexto     = document.getElementById("resumenTexto");
+    const savedMessage     = document.getElementById("savedMessage");
+    const resetDiaBtn      = document.getElementById("resetDia");
+    const historialLista   = document.getElementById("historialLista");
+    const suggestInfo      = document.getElementById("suggestInfo");
+    const turnoInfo        = document.getElementById("turnoInfo");
+    const exportDiaBtn     = document.getElementById("exportDia");
+    const exportCard       = document.getElementById("exportCard");
+    const btnTurnoAhora    = document.getElementById("btnTurnoAhora");
 
-    const desayunoInput = document.getElementById("desayuno");
-    const almuerzoInput = document.getElementById("almuerzo");
-    const meriendaInput = document.getElementById("merienda");
-    const cenaInput = document.getElementById("cena");
-    const aguaInput = document.getElementById("aguaVasos");
-    const medManianaInput = document.getElementById("medManiana");
-    const medNocheInput = document.getElementById("medNoche");
-    const notasInput = document.getElementById("notas");
+    const moodOptions      = document.querySelectorAll(".mood-option");
+    const moodRadios       = document.querySelectorAll('input[name="estadoAnimo"]');
 
-    const statusComidas = document.getElementById("statusComidas");
-    const statusMed = document.getElementById("statusMed");
-    const resumenTexto = document.getElementById("resumenTexto");
-    const savedMessage = document.getElementById("savedMessage");
-    const resetDiaBtn = document.getElementById("resetDia");
-    const historialLista = document.getElementById("historialLista");
-    const suggestInfo = document.getElementById("suggestInfo");
-    const turnoInfo = document.getElementById("turnoInfo");
-    const exportDiaBtn = document.getElementById("exportDia");
-    const btnTurnoAhora = document.getElementById("btnTurnoAhora");
-
-    const moodOptions = document.querySelectorAll(".mood-option");
-    const moodRadios = document.querySelectorAll('input[name="estadoAnimo"]');
-
-    const tabTurno = document.getElementById("tabTurno");
-    const tabLista = document.getElementById("tabLista");
+    const tabTurno   = document.getElementById("tabTurno");
+    const tabLista   = document.getElementById("tabLista");
     const panelTurno = document.getElementById("panelTurno");
     const panelLista = document.getElementById("panelLista");
 
-    const listaCategoria = document.getElementById("listaCategoria");
-    const listaItem = document.getElementById("listaItem");
-    const listaCantidad = document.getElementById("listaCantidad");
-    const listaAgregarBtn = document.getElementById("listaAgregar");
-    const listaPendientes = document.getElementById("listaPendientes");
+    const listaCategoria      = document.getElementById("listaCategoria");
+    const listaItem           = document.getElementById("listaItem");
+    const listaCantidad       = document.getElementById("listaCantidad");
+    const listaAgregarBtn     = document.getElementById("listaAgregar");
+    const listaPendientes     = document.getElementById("listaPendientes");
+    const listaComprados      = document.getElementById("listaComprados");
+    const btnLimpiarComprados = document.getElementById("btnLimpiarComprados");
+
+    // Exportar: sólo visible en modo familia
+    if (!isFamiliaView && exportCard) {
+      exportCard.style.display = "none";
+    }
 
     let saveTimeout = null;
     let lastCuidadorValue = cuidadorSelect.value;
     let listaComprasData = [];
 
+    // --- Calendario de turnos ---
     const schedule = {
       1: [
-        { from: 0, to: 8 * 60, cuidador: "rocio" },
+        { from: 0, to: 8 * 60,  cuidador: "rocio"     },
         { from: 12 * 60, to: 18 * 60, cuidador: "guadalupe" },
-        { from: 20 * 60, to: 24 * 60, cuidador: "noelia" },
+        { from: 20 * 60, to: 24 * 60, cuidador: "noelia"    }
       ],
       2: [
-        { from: 0, to: 8 * 60, cuidador: "noelia" },
-        { from: 12 * 60, to: 16 * 60, cuidador: "aylen" },
-        { from: 21 * 60, to: 24 * 60, cuidador: "guadalupe" },
+        { from: 0, to: 8 * 60,  cuidador: "noelia"    },
+        { from: 12 * 60, to: 16 * 60, cuidador: "aylen"     },
+        { from: 21 * 60, to: 24 * 60, cuidador: "guadalupe" }
       ],
       3: [
         { from: 0, to: 12 * 60, cuidador: "guadalupe" },
         { from: 12 * 60, to: 18 * 60, cuidador: "guadalupe" },
-        { from: 20 * 60, to: 24 * 60, cuidador: "noelia" },
+        { from: 20 * 60, to: 24 * 60, cuidador: "noelia"    }
       ],
       4: [
-        { from: 0, to: 8 * 60, cuidador: "noelia" },
-        { from: 12 * 60, to: 16 * 60, cuidador: "aylen" },
-        { from: 20 * 60, to: 24 * 60, cuidador: "noelia" },
+        { from: 0, to: 8 * 60,  cuidador: "noelia"    },
+        { from: 12 * 60, to: 16 * 60, cuidador: "aylen"     },
+        { from: 20 * 60, to: 24 * 60, cuidador: "noelia"    }
       ],
       5: [
-        { from: 0, to: 8 * 60, cuidador: "noelia" },
+        { from: 0, to: 8 * 60,  cuidador: "noelia"    },
         { from: 9 * 60, to: 18 * 60, cuidador: "guadalupe" },
-        { from: 20 * 60, to: 24 * 60, cuidador: "noelia" },
+        { from: 20 * 60, to: 24 * 60, cuidador: "noelia"    }
       ],
       6: [
-        { from: 0, to: 8 * 60, cuidador: "noelia" },
-        { from: 20 * 60, to: 24 * 60, cuidador: "rocio" },
+        { from: 0, to: 8 * 60,  cuidador: "noelia"    },
+        { from: 20 * 60, to: 24 * 60, cuidador: "rocio"     }
       ],
       0: [
-        { from: 0, to: 8 * 60, cuidador: "rocio" },
-        { from: 19 * 60, to: 24 * 60, cuidador: "rocio" },
-      ],
+        { from: 0, to: 8 * 60,  cuidador: "rocio"     },
+        { from: 19 * 60, to: 24 * 60, cuidador: "rocio"     }
+      ]
     };
 
     function hoyISO() {
@@ -867,14 +892,11 @@
       let minutes;
       switch (turno) {
         case "maniana":
-          minutes = 9 * 60;
-          break;
+          minutes = 9 * 60; break;
         case "tarde":
-          minutes = 15 * 60;
-          break;
+          minutes = 15 * 60; break;
         case "noche":
-          minutes = 22 * 60;
-          break;
+          minutes = 22 * 60; break;
         case "completo":
         default:
           minutes = 12 * 60;
@@ -890,14 +912,12 @@
 
     function getSelectedMood() {
       let value = "";
-      moodRadios.forEach((r) => {
-        if (r.checked) value = r.value;
-      });
+      moodRadios.forEach(r => { if (r.checked) value = r.value; });
       return value;
     }
 
     function setMoodUI(value) {
-      moodOptions.forEach((opt) => {
+      moodOptions.forEach(opt => {
         const radio = opt.querySelector('input[name="estadoAnimo"]');
         const match = radio.value === value;
         radio.checked = match;
@@ -918,46 +938,31 @@
 
     function labelCuidador(value) {
       switch (value) {
-        case "guadalupe":
-          return "Guadalupe";
-        case "aylen":
-          return "Aylén";
-        case "noelia":
-          return "Noelia";
-        case "rocio":
-          return "Rocío";
-        case "otro":
-          return "Familiar / Otro";
-        default:
-          return value;
+        case "guadalupe": return "Guadalupe";
+        case "aylen":     return "Aylén";
+        case "noelia":    return "Noelia";
+        case "rocio":     return "Rocío";
+        case "otro":      return "Familiar / Otro";
+        default:          return value;
       }
     }
 
     function labelTurno(value) {
       switch (value) {
-        case "maniana":
-          return "Mañana";
-        case "tarde":
-          return "Tarde";
-        case "noche":
-          return "Noche";
-        case "completo":
-          return "24 hs";
-        default:
-          return value || "-";
+        case "maniana": return "Mañana";
+        case "tarde":   return "Tarde";
+        case "noche":   return "Noche";
+        case "completo":return "24 hs";
+        default:        return value || "-";
       }
     }
 
     function labelCategoria(cat) {
       switch (cat) {
-        case "almacen":
-          return "Almacén";
-        case "verduleria":
-          return "Verdulería";
-        case "carniceria":
-          return "Carnicería";
-        default:
-          return "Otro";
+        case "almacen":    return "Almacén";
+        case "verduleria": return "Verdulería";
+        case "carniceria": return "Carnicería";
+        default:           return "Otro";
       }
     }
 
@@ -969,12 +974,33 @@
       return `${d}/${m}/${y}`;
     }
 
+    function getHoraDesdeRec(rec) {
+      const raw = rec.created_at || rec.hora || rec.fecha_hora;
+      if (!raw) return "";
+      const date = new Date(raw);
+      if (isNaN(date.getTime())) return "";
+      const hh = String(date.getHours()).padStart(2, "0");
+      const mm = String(date.getMinutes()).padStart(2, "0");
+      return `${hh}:${mm}`;
+    }
+
+    function formatFechaCompra(item) {
+      const raw = item.comprado_en || item.updated_at || item.created_at;
+      if (!raw) return "";
+      const d = new Date(raw);
+      if (isNaN(d.getTime())) return "";
+      const hoy = new Date();
+      const diffMs = hoy - d;
+      const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      if (diffDias === 0) return "hoy";
+      if (diffDias === 1) return "ayer";
+      return `hace ${diffDias} días`;
+    }
+
     function mostrarGuardado() {
       savedMessage.textContent = "Guardado en TERE ✅";
       if (saveTimeout) clearTimeout(saveTimeout);
-      saveTimeout = setTimeout(() => {
-        savedMessage.textContent = "";
-      }, 1500);
+      saveTimeout = setTimeout(() => { savedMessage.textContent = ""; }, 1500);
     }
 
     async function fetchRecordForCurrentKey() {
@@ -986,20 +1012,19 @@
       if (!rows || rows.length === 0) return null;
 
       const r = rows[0];
-
       return {
         fecha,
         turno,
         cuidador,
-        desayuno: !!r.desayuno,
-        almuerzo: !!r.almuerzo,
-        merienda: !!r.merienda,
-        cena: !!r.cena,
-        aguaVasos: r.agua_vasos ?? 0,
+        desayuno:   !!r.desayuno,
+        almuerzo:   !!r.almuerzo,
+        merienda:   !!r.merienda,
+        cena:       !!r.cena,
+        aguaVasos:  r.agua_vasos ?? 0,
         medManiana: !!r.med_maniana,
-        medNoche: !!r.med_noche,
-        notas: r.notas || "",
-        estadoAnimo: r.estado_animo || "",
+        medNoche:   !!r.med_noche,
+        notas:      r.notas || "",
+        estadoAnimo:r.estado_animo || ""
       };
     }
 
@@ -1014,17 +1039,17 @@
         medManiana: false,
         medNoche: false,
         aguaVasos: 0,
-        turnos: 0,
+        turnos: 0
       };
 
-      registros.forEach((rec) => {
+      registros.forEach(rec => {
         result.turnos += 1;
-        if (rec.desayuno) result.desayuno = true;
-        if (rec.almuerzo) result.almuerzo = true;
-        if (rec.merienda) result.merienda = true;
-        if (rec.cena) result.cena = true;
+        if (rec.desayuno)    result.desayuno = true;
+        if (rec.almuerzo)    result.almuerzo = true;
+        if (rec.merienda)    result.merienda = true;
+        if (rec.cena)        result.cena = true;
         if (rec.med_maniana) result.medManiana = true;
-        if (rec.med_noche) result.medNoche = true;
+        if (rec.med_noche)   result.medNoche = true;
         const agua = rec.agua_vasos || 0;
         if (agua > result.aguaVasos) result.aguaVasos = agua;
       });
@@ -1045,7 +1070,7 @@
         medManiana: medManianaInput.checked,
         medNoche: medNocheInput.checked,
         notas: notasInput.value || "",
-        estadoAnimo: getSelectedMood(),
+        estadoAnimo: getSelectedMood()
       };
 
       try {
@@ -1063,24 +1088,24 @@
       try {
         const rec = await fetchRecordForCurrentKey();
         if (rec) {
-          desayunoInput.checked = rec.desayuno;
-          almuerzoInput.checked = rec.almuerzo;
-          meriendaInput.checked = rec.merienda;
-          cenaInput.checked = rec.cena;
-          aguaInput.value = rec.aguaVasos || "";
+          desayunoInput.checked   = rec.desayuno;
+          almuerzoInput.checked   = rec.almuerzo;
+          meriendaInput.checked   = rec.merienda;
+          cenaInput.checked       = rec.cena;
+          aguaInput.value         = rec.aguaVasos || "";
           medManianaInput.checked = rec.medManiana;
-          medNocheInput.checked = rec.medNoche;
-          notasInput.value = rec.notas || "";
+          medNocheInput.checked   = rec.medNoche;
+          notasInput.value        = rec.notas || "";
           setMoodUI(rec.estadoAnimo);
         } else {
-          desayunoInput.checked = false;
-          almuerzoInput.checked = false;
-          meriendaInput.checked = false;
-          cenaInput.checked = false;
-          aguaInput.value = "";
+          desayunoInput.checked   = false;
+          almuerzoInput.checked   = false;
+          meriendaInput.checked   = false;
+          cenaInput.checked       = false;
+          aguaInput.value         = "";
           medManianaInput.checked = false;
-          medNocheInput.checked = false;
-          notasInput.value = "";
+          medNocheInput.checked   = false;
+          notasInput.value        = "";
           clearMoodUI();
         }
         await actualizarEstadosVisuales();
@@ -1091,29 +1116,23 @@
     }
 
     async function resetCurrentRecord() {
-      desayunoInput.checked = false;
-      almuerzoInput.checked = false;
-      meriendaInput.checked = false;
-      cenaInput.checked = false;
-      aguaInput.value = "";
+      desayunoInput.checked   = false;
+      almuerzoInput.checked   = false;
+      meriendaInput.checked   = false;
+      cenaInput.checked       = false;
+      aguaInput.value         = "";
       medManianaInput.checked = false;
-      medNocheInput.checked = false;
-      notasInput.value = "";
+      medNocheInput.checked   = false;
+      notasInput.value        = "";
       clearMoodUI();
       await saveCurrentRecord();
     }
 
     async function actualizarEstadosVisuales() {
-      const anyMeal =
-        desayunoInput.checked ||
-        almuerzoInput.checked ||
-        meriendaInput.checked ||
-        cenaInput.checked;
-      const allMeals =
-        desayunoInput.checked &&
-        almuerzoInput.checked &&
-        meriendaInput.checked &&
-        cenaInput.checked;
+      const anyMeal = desayunoInput.checked || almuerzoInput.checked ||
+                      meriendaInput.checked || cenaInput.checked;
+      const allMeals = desayunoInput.checked && almuerzoInput.checked &&
+                       meriendaInput.checked && cenaInput.checked;
 
       if (allMeals) {
         statusComidas.textContent = "Comidas completas (turno)";
@@ -1151,28 +1170,22 @@
         const daily = await getDailySummary(fechaDia);
         const partes = [];
 
-        const todasComidasDia =
-          daily.desayuno && daily.almuerzo && daily.merienda && daily.cena;
+        const todasComidasDia = daily.desayuno && daily.almuerzo &&
+                                daily.merienda && daily.cena;
 
         if (todasComidasDia) {
-          partes.push(
-            "✅ Todas las comidas del día registradas (desayuno, almuerzo, merienda y cena)."
-          );
+          partes.push("✅ Todas las comidas del día registradas (desayuno, almuerzo, merienda y cena).");
         } else {
           const faltantes = [];
           if (!daily.desayuno) faltantes.push("desayuno");
           if (!daily.almuerzo) faltantes.push("almuerzo");
           if (!daily.merienda) faltantes.push("merienda");
-          if (!daily.cena) faltantes.push("cena");
-          partes.push(
-            `⚠️ Faltan comidas por registrar: ${faltantes.join(", ")}.`
-          );
+          if (!daily.cena)     faltantes.push("cena");
+          partes.push(`⚠️ Faltan comidas por registrar: ${faltantes.join(", ")}.`);
         }
 
         if (daily.medManiana && daily.medNoche) {
-          partes.push(
-            "✅ Medicación del día completa (mañana y noche registradas en al menos un turno)."
-          );
+          partes.push("✅ Medicación del día completa (mañana y noche registradas en al menos un turno).");
         } else if (daily.medManiana || daily.medNoche) {
           partes.push("⚠️ Medicación incompleta (sólo una franja registrada).");
         } else {
@@ -1181,9 +1194,7 @@
 
         const vasos = daily.aguaVasos || 0;
         if (vasos > 0) {
-          partes.push(
-            `💧 Se registraron ${vasos} vaso(s) de agua en el día (valor consolidado).`
-          );
+          partes.push(`💧 Se registraron ${vasos} vaso(s) de agua en el día (valor consolidado).`);
         } else {
           partes.push("💧 No se registró agua para este día.");
         }
@@ -1194,11 +1205,94 @@
           partes.push("📋 Aún no hay turnos registrados para este día.");
         }
 
-        resumenTexto.textContent = partes.join(" ");
+        const textoResumen = partes.join(" ");
+        resumenTexto.textContent = textoResumen;
       } catch (e) {
         console.error(e);
-        resumenTexto.textContent =
-          "No se pudo obtener el resumen diario (problema de conexión).";
+        resumenTexto.textContent = "No se pudo obtener el resumen diario (problema de conexión).";
+      }
+    }
+
+    function renderListaCompras() {
+      if (!listaPendientes) return;
+      const pendientes = listaComprasData.filter(it => it.estado !== "comprado");
+      const comprados  = listaComprasData.filter(it => it.estado === "comprado");
+
+      function buildGroup(container, items, options) {
+        container.innerHTML = "";
+        if (!items.length) {
+          container.innerHTML = "<div class='small-text'>Nada por ahora.</div>";
+          return;
+        }
+
+        const byCat = new Map();
+        items.forEach(it => {
+          const cat = it.categoria || "otro";
+          if (!byCat.has(cat)) byCat.set(cat, []);
+          byCat.get(cat).push(it);
+        });
+
+        byCat.forEach((list, cat) => {
+          const catTitle = document.createElement("div");
+          catTitle.style.marginTop = "4px";
+          catTitle.innerHTML = `<strong>${labelCategoria(cat)}</strong>`;
+          container.appendChild(catTitle);
+
+          list.forEach(item => {
+            const row = document.createElement("div");
+            row.className = "lista-item";
+
+            const main = document.createElement("div");
+            main.className = "lista-item-main";
+            const cantTxt = item.cantidad ? `${item.cantidad} ` : "";
+            main.textContent = `${cantTxt}${item.item}`;
+            row.appendChild(main);
+
+            if (options && options.showCompradoButton) {
+              const acc = document.createElement("div");
+              acc.className = "lista-accion";
+              const btn = document.createElement("button");
+              btn.className = "lista-btn-small";
+              btn.textContent = "✅ Comprado";
+              btn.addEventListener("click", async () => {
+                try {
+                  await apiComprasMarcarComprado(item.id);
+                  await cargarListaCompras();
+                } catch (e) {
+                  console.error(e);
+                  alert("No se pudo actualizar la lista.");
+                }
+              });
+              acc.appendChild(btn);
+              row.appendChild(acc);
+            } else if (options && options.showFecha) {
+              const acc = document.createElement("div");
+              acc.className = "lista-accion";
+              acc.textContent = formatFechaCompra(item);
+              row.appendChild(acc);
+            }
+
+            container.appendChild(row);
+          });
+        });
+      }
+
+      buildGroup(listaPendientes, pendientes, { showCompradoButton: !isFamiliaView });
+
+      if (listaComprados) {
+        buildGroup(listaComprados, comprados, { showCompradoButton: false, showFecha: true });
+      }
+    }
+
+    async function cargarListaCompras() {
+      try {
+        const data = await apiComprasListar();
+        listaComprasData = Array.isArray(data) ? data : [];
+        renderListaCompras();
+      } catch (e) {
+        console.error(e);
+        listaPendientes.innerHTML = "<div>No se pudo cargar la lista (problema de conexión).</div>";
+        if (listaComprados) listaComprados.innerHTML = "";
       }
     }
 
@@ -1207,28 +1301,22 @@
         const registros = await apiListar({ limite: 100 });
 
         if (!registros || registros.length === 0) {
-          historialLista.innerHTML =
-            "<div class='small-text'>Sin registros todavía.</div>";
+          historialLista.innerHTML = "<div class='small-text'>Sin registros todavía.</div>";
           return;
         }
 
         const agrupados = new Map();
-
-        registros.forEach((rec) => {
-          const fechaStr =
-            typeof rec.fecha === "string" ? rec.fecha.slice(0, 10) : rec.fecha;
+        registros.forEach(rec => {
+          const fechaStr = typeof rec.fecha === "string" ? rec.fecha.slice(0, 10) : rec.fecha;
           const key = `${fechaStr}|${rec.turno}|${rec.cuidador}`;
-          if (!agrupados.has(key)) {
-            agrupados.set(key, rec);
-          }
+          if (!agrupados.has(key)) agrupados.set(key, rec);
         });
 
         const condensados = Array.from(agrupados.values());
         historialLista.innerHTML = "";
 
-        condensados.forEach((rec) => {
-          const fechaStr =
-            typeof rec.fecha === "string" ? rec.fecha.slice(0, 10) : rec.fecha;
+        condensados.forEach(rec => {
+          const fechaStr = typeof rec.fecha === "string" ? rec.fecha.slice(0, 10) : rec.fecha;
           const comidasCount =
             (rec.desayuno ? 1 : 0) +
             (rec.almuerzo ? 1 : 0) +
@@ -1236,10 +1324,12 @@
             (rec.cena ? 1 : 0);
 
           const medCount =
-            (rec.med_maniana ? 1 : 0) + (rec.med_noche ? 1 : 0);
+            (rec.med_maniana ? 1 : 0) +
+            (rec.med_noche ? 1 : 0);
 
           const agua = rec.agua_vasos ?? 0;
           const mood = moodEmoji(rec.estado_animo);
+          const hora = getHoraDesdeRec(rec);
 
           const item = document.createElement("div");
           item.className = "history-item";
@@ -1249,13 +1339,13 @@
 
           const title = document.createElement("div");
           title.className = "history-title";
-          title.textContent = `${formatFecha(fechaStr)} · ${labelTurno(
-            rec.turno
-          )}${mood ? " " + mood : ""}`;
+          title.textContent = `${formatFecha(fechaStr)} · ${labelTurno(rec.turno)}${mood ? " " + mood : ""}`;
 
           const badge = document.createElement("div");
           badge.className = "badge";
-          badge.textContent = labelCuidador(rec.cuidador);
+          badge.textContent = hora
+            ? `${labelCuidador(rec.cuidador)} · ${hora}`
+            : labelCuidador(rec.cuidador);
 
           main.appendChild(title);
           main.appendChild(badge);
@@ -1263,9 +1353,7 @@
           const meta = document.createElement("div");
           meta.className = "history-meta";
           meta.textContent = rec.notas
-            ? `Notas: ${rec.notas.slice(0, 200)}${
-                rec.notas.length > 200 ? "..." : ""
-              }`
+            ? `Notas: ${rec.notas.slice(0, 200)}${rec.notas.length > 200 ? "..." : ""}`
             : "Sin notas.";
 
           const summary = document.createElement("div");
@@ -1276,29 +1364,32 @@
           item.appendChild(summary);
           item.appendChild(meta);
 
-          const deleteBtn = document.createElement("button");
-          deleteBtn.className = "delete-button";
-          deleteBtn.textContent = "Borrar";
-          deleteBtn.addEventListener("click", async (e) => {
-            e.stopPropagation();
-            const pin = window.prompt("Ingresá el PIN para borrar el turno:");
-            if (pin !== DELETE_PIN) return;
-            try {
-              await apiBorrar(rec.id);
-              await buildHistory();
-              await actualizarEstadosVisuales();
-            } catch (err) {
-              console.error(err);
-              alert("No se pudo borrar el registro.");
-            }
-          });
-          item.appendChild(deleteBtn);
+          if (!isFamiliaView) {
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "delete-button";
+            deleteBtn.textContent = "Borrar";
+            deleteBtn.addEventListener("click", async (e) => {
+              e.stopPropagation();
+              const pin = window.prompt("Ingresá el PIN para borrar el turno:");
+              if (pin !== DELETE_PIN) return;
+              try {
+                await apiBorrar(rec.id);
+                await buildHistory();
+                await actualizarEstadosVisuales();
+              } catch (err) {
+                console.error(err);
+                alert("No se pudo borrar el registro.");
+              }
+            });
+            item.appendChild(deleteBtn);
+          }
 
           item.addEventListener("click", () => {
-            fechaInput.value = fechaStr || hoyISO();
-            turnoSelect.value = rec.turno || "maniana";
+            if (isFamiliaView) return; // familia no carga el formulario
+            fechaInput.value     = fechaStr || hoyISO();
+            turnoSelect.value    = rec.turno || "maniana";
             cuidadorSelect.value = rec.cuidador || "otro";
-            lastCuidadorValue = cuidadorSelect.value;
+            lastCuidadorValue    = cuidadorSelect.value;
             suggestInfo.textContent = "";
             loadCurrentRecord();
             window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1308,8 +1399,7 @@
         });
       } catch (e) {
         console.error(e);
-        historialLista.innerHTML =
-          "<div class='small-text'>No se pudo cargar el historial (problema de conexión).</div>";
+        historialLista.innerHTML = "<div class='small-text'>No se pudo cargar el historial (problema de conexión).</div>";
       }
     }
 
@@ -1325,20 +1415,16 @@
 
       if (scheduled) {
         cuidadorSelect.value = scheduled;
-        suggestInfo.textContent =
-          "Cuidadora sugerida automáticamente según calendario del turno.";
+        suggestInfo.textContent = "Cuidadora sugerida automáticamente según calendario del turno.";
       } else {
-        suggestInfo.textContent =
-          "Fuera de un turno fijo: seleccionar cuidadora manualmente.";
+        suggestInfo.textContent = "Fuera de un turno fijo: seleccionar cuidadora manualmente.";
       }
 
       lastCuidadorValue = cuidadorSelect.value;
 
       const hora = String(now.getHours()).padStart(2, "0");
-      const min = String(now.getMinutes()).padStart(2, "0");
-      turnoInfo.textContent = `Turno en curso estimado: ${labelTurno(
-        turnoGuess
-      )} · ${hora}:${min} hs`;
+      const min  = String(now.getMinutes()).padStart(2, "0");
+      turnoInfo.textContent = `Turno en curso estimado: ${labelTurno(turnoGuess)} · ${hora}:${min} hs`;
     }
 
     async function handleCuidadorChange() {
@@ -1350,11 +1436,11 @@
 
       if (scheduled && newValue !== "otro" && newValue !== scheduled) {
         const nombreProgramado = labelCuidador(scheduled);
-        const nombreNuevo = labelCuidador(newValue);
+        const nombreNuevo      = labelCuidador(newValue);
         const ok = window.confirm(
           `${nombreNuevo} no está programada para este turno.\n` +
-            `Según el calendario debería estar ${nombreProgramado}.\n\n` +
-            `¿Confirmás que ${nombreNuevo} está cubriendo el turno?`
+          `Según el calendario debería estar ${nombreProgramado}.\n\n` +
+          `¿Confirmás que ${nombreNuevo} está cubriendo el turno?`
         );
         if (!ok) {
           cuidadorSelect.value = lastCuidadorValue;
@@ -1381,73 +1467,85 @@
       panelLista.style.display = "";
     }
 
-    function renderListaCompras() {
-      if (!listaPendientes) return;
-      if (!listaComprasData || listaComprasData.length === 0) {
-        listaPendientes.innerHTML = "<div>No hay pendientes por ahora.</div>";
+    function setupLimpiarComprados() {
+      if (!btnLimpiarComprados) return;
+      if (isFamiliaView) {
+        btnLimpiarComprados.style.display = "none";
         return;
       }
+      btnLimpiarComprados.style.display = "inline-block";
+      btnLimpiarComprados.addEventListener("click", () => {
+        const pin = window.prompt("Ingresá el PIN para limpiar la lista de comprados:");
+        if (pin !== DELETE_PIN) return;
+        // limpieza lógica local
+        listaComprasData = listaComprasData.filter(it => it.estado !== "comprado");
+        renderListaCompras();
+      });
+    }
 
-      listaPendientes.innerHTML = "";
-      const cont = document.createElement("div");
+    function aplicarModoFamilia() {
+      if (!isFamiliaView) return;
 
-      listaComprasData.forEach((item) => {
-        if (item.estado === "comprado") return;
+      if (familiaBanner) familiaBanner.style.display = "block";
 
-        const row = document.createElement("div");
-        row.className = "lista-item";
+      // Fecha editable para navegar; turno/cuidador bloqueados
+      turnoSelect.disabled    = true;
+      cuidadorSelect.disabled = true;
 
-        const main = document.createElement("div");
-        main.className = "lista-item-main";
-        main.innerHTML = `<span class="lista-cat">${labelCategoria(
-          item.categoria
-        )}</span>: ${item.cantidad} ${item.item}`;
-
-        const acc = document.createElement("div");
-        acc.className = "lista-accion";
-        const btn = document.createElement("button");
-        btn.className = "lista-btn-small";
-        btn.textContent = "✅ Comprado";
-        btn.addEventListener("click", async () => {
-          try {
-            await apiComprasMarcarComprado(item.id);
-            await cargarListaCompras();
-          } catch (e) {
-            console.error(e);
-            alert("No se pudo actualizar la lista.");
-          }
-        });
-        acc.appendChild(btn);
-
-        row.appendChild(main);
-        row.appendChild(acc);
-        cont.appendChild(row);
+      [
+        desayunoInput,
+        almuerzoInput,
+        meriendaInput,
+        cenaInput,
+        aguaInput,
+        medManianaInput,
+        medNocheInput
+      ].forEach(el => {
+        if (!el) return;
+        el.disabled = true;
+        el.style.opacity = 0.7;
       });
 
-      listaPendientes.appendChild(cont);
-    }
-
-    async function cargarListaCompras() {
-      try {
-        const data = await apiComprasListar();
-        listaComprasData = Array.isArray(data) ? data : [];
-        renderListaCompras();
-      } catch (e) {
-        console.error(e);
-        listaPendientes.innerHTML =
-          "<div>No se pudo cargar la lista (problema de conexión).</div>";
+      if (notasInput) {
+        notasInput.readOnly = true;
+        notasInput.style.backgroundColor = "#f9f9f9";
       }
+
+      moodOptions.forEach(opt => {
+        opt.style.pointerEvents = "none";
+        opt.style.opacity = 0.6;
+      });
+
+      if (resetDiaBtn)   resetDiaBtn.style.display = "none";
+      if (btnTurnoAhora) btnTurnoAhora.style.display = "none";
+      if (listaAgregarBtn) listaAgregarBtn.style.display = "none";
+
+      // Export visible en familia
+      if (exportCard)   exportCard.style.display = "block";
+      if (exportDiaBtn) exportDiaBtn.style.display = "block";
     }
 
-    async function init() {
-      currentDateLabel.textContent = "Hoy: " + formatHoyHumano();
+      async function init() {
+        const hoy = hoyISO();
+        currentDateLabel.textContent = "Hoy: " + formatHoyHumano();
+      
+        // 👉 No permitir fechas futuras
+        if (fechaInput) {
+          fechaInput.max = hoy;
+        }
+      
+        sugerirTurnoYCuidadorSegunAhora();
+        await loadCurrentRecord();
 
-      sugerirTurnoYCuidadorSegunAhora();
-      await loadCurrentRecord();
       await buildHistory();
       await cargarListaCompras();
 
-      fechaInput.addEventListener("change", () => {
+       fechaInput.addEventListener("change", () => {
+        const hoy = hoyISO();
+        if (fechaInput.value && fechaInput.value > hoy) {
+          alert("No se pueden cargar datos en fechas futuras. Se volvió a la fecha de hoy.");
+          fechaInput.value = hoy;
+        }
         suggestInfo.textContent = "";
         loadCurrentRecord();
       });
@@ -1466,40 +1564,42 @@
         meriendaInput,
         cenaInput,
         medManianaInput,
-        medNocheInput,
-      ].forEach((el) =>
+        medNocheInput
+      ].forEach(el =>
         el.addEventListener("change", () => {
+          if (isFamiliaView) return;
           saveCurrentRecord();
         })
       );
 
       aguaInput.addEventListener("input", () => {
-        saveCurrentRecord();
-      });
-      notasInput.addEventListener("input", () => {
+        if (isFamiliaView) return;
         saveCurrentRecord();
       });
 
-      moodOptions.forEach((opt) => {
+      notasInput.addEventListener("input", () => {
+        if (isFamiliaView) return;
+        saveCurrentRecord();
+      });
+
+      moodOptions.forEach(opt => {
         const radio = opt.querySelector('input[name="estadoAnimo"]');
         opt.addEventListener("click", () => {
+          if (isFamiliaView) return;
           setMoodUI(radio.value);
           saveCurrentRecord();
         });
       });
 
       resetDiaBtn.addEventListener("click", () => {
-        if (!window.confirm("¿Seguro que querés borrar este turno completo?")) {
-          return;
-        }
+        const ok = window.confirm("¿Seguro que querés borrar este turno completo?");
+        if (!ok) return;
         resetCurrentRecord();
       });
 
       exportDiaBtn.addEventListener("click", () => {
         const fecha = fechaInput.value || hoyISO();
-        const url = `${API_BASE}/exportar-csv?fecha=${encodeURIComponent(
-          fecha
-        )}`;
+        const url = `${API_BASE}/exportar-csv?fecha=${encodeURIComponent(fecha)}`;
         window.open(url, "_blank");
       });
 
@@ -1510,37 +1610,16 @@
 
       if (tabTurno && tabLista) {
         tabTurno.addEventListener("click", activarTabTurno);
-        tabLista.addEventListener("click", activarTabLista);
+        tabLista .addEventListener("click", activarTabLista);
         activarTabTurno();
       }
 
-      if (listaAgregarBtn) {
-        listaAgregarBtn.addEventListener("click", async () => {
-          const categoria = listaCategoria.value || "otro";
-          const item = (listaItem.value || "").trim();
-          const cantidad = (listaCantidad.value || "").trim() || "1";
-
-          if (!item) {
-            alert("Escribí qué hay que comprar.");
-            return;
-          }
-
-          try {
-            await apiComprasAgregar({ categoria, item, cantidad });
-            listaItem.value = "";
-            listaCantidad.value = "";
-            await cargarListaCompras();
-          } catch (e) {
-            console.error(e);
-            alert("No se pudo guardar en la lista.");
-          }
-        });
-      }
+      setupLimpiarComprados();
+      aplicarModoFamilia();
+      await actualizarEstadosVisuales();
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
-      init();
-    });
+    document.addEventListener("DOMContentLoaded", init);
   </script>
 </body>
 </html>
