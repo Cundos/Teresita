@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>TERESITAPP</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <title>TERESITA APP</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- Favicon emoji 👵🏻 -->
   <link
     rel="icon"
     type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-size='80'%3E👵🏻%3C/text%3E%3C/svg%3E"
-  />
+  >
 
   <style>
     * { box-sizing: border-box; }
@@ -26,11 +26,12 @@
       max-width: 480px;
       margin: 0 auto;
       padding: 16px;
+      padding-bottom: 16px;
     }
 
     h1 {
-      font-size: 1.4rem;
-      margin: 0 0 4px;
+      font-size: 1.5rem;
+      margin: 4px 0 4px;
       text-align: center;
     }
 
@@ -41,17 +42,17 @@
       margin-bottom: 8px;
     }
 
-    .today-label {
-      text-align: center;
+    .date-label {
       font-size: 0.8rem;
+      text-align: center;
       color: #777;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
     }
 
     .card {
       background: #fff;
       border-radius: 12px;
-      padding: 12px 14px;
+      padding: 14px 16px;
       margin-bottom: 12px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.06);
     }
@@ -80,14 +81,12 @@
     input[type="date"],
     select,
     input[type="number"],
-    input[type="text"],
     textarea {
       width: 100%;
       padding: 8px 10px;
       border-radius: 8px;
       border: 1px solid #ccc;
       font-size: 0.9rem;
-      font-family: inherit;
     }
 
     textarea {
@@ -138,6 +137,22 @@
       color: #8a4b00;
     }
 
+    .status-bad {
+      background: #ffd6d6;
+      color: #8a0000;
+    }
+
+    .day-status-panel {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .day-status-icon {
+      font-size: 1.4rem;
+    }
+
     .small-text {
       font-size: 0.8rem;
       color: #666;
@@ -155,15 +170,21 @@
       color: #19692c;
       text-align: right;
       min-height: 1em;
+      opacity: 0;
+      transition: opacity 0.25s.ease;
+    }
+
+    .saved-message.visible {
+      opacity: 1;
     }
 
     button.reset-btn {
       width: 100%;
       margin-top: 6px;
-      padding: 8px;
+      padding: 11px;
       border-radius: 999px;
       border: none;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       background: #ffe5e5;
       color: #a00000;
       cursor: pointer;
@@ -176,10 +197,10 @@
     button.export-btn {
       width: 100%;
       margin-top: 8px;
-      padding: 8px;
+      padding: 11px;
       border-radius: 999px;
       border: none;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       background: #e6f0ff;
       color: #003f8c;
       cursor: pointer;
@@ -189,40 +210,72 @@
       opacity: 0.85;
     }
 
-    .small-chip {
-      font-size: 0.75rem;
-      padding: 2px 8px;
+    .delete-button {
+      margin-top: 4px;
+      align-self: flex-end;
+      font-size: 0.7rem;
+      padding: 5px 9px;
       border-radius: 999px;
-      border: 1px solid #ccc;
-      background: #f7f7f7;
+      border: none;
+      background: #ffe5e5;
+      color: #a00000;
       cursor: pointer;
     }
 
-    .small-chip.secondary {
-      background: #fff7e6;
-      border-color: #f0c36b;
-      color: #8a4b00;
+    .delete-button:active {
+      opacity: 0.8;
     }
 
     /* Historial */
     .history-list {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
       max-height: 260px;
       overflow-y: auto;
+    }
+
+    .history-day {
+      border-radius: 10px;
+      border: 1px solid #eee;
+      padding: 6px 8px;
+      background: #fafafa;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .history-day-header {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #444;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .history-day-summary {
+      font-size: 0.75rem;
+      color: #666;
+    }
+
+    .history-day-items {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 4px;
     }
 
     .history-item {
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      padding: 6px 8px;
+      gap: 2px;
+      padding: 8px 8px;
       border-radius: 8px;
       border: 1px solid #eee;
-      background: #fafafa;
+      background: #ffffff;
       font-size: 0.8rem;
-      position: relative;
+      cursor: pointer;
     }
 
     .history-item-main {
@@ -250,28 +303,21 @@
       opacity: 0.7;
     }
 
+    .history-item-empty {
+      border-color: #ffb3b3;
+      background: #fff0f0;
+    }
+
+    .history-item-incomplete {
+      border-color: #ffe0b3;
+      background: #fff8ee;
+    }
+
     .badge {
       font-size: 0.7rem;
       padding: 2px 6px;
       border-radius: 999px;
       background: #eee;
-    }
-
-    .delete-button {
-      position: absolute;
-      right: 8px;
-      bottom: 6px;
-      font-size: 0.7rem;
-      border-radius: 999px;
-      border: none;
-      padding: 2px 10px;
-      background: #ffe5e5;
-      color: #a00000;
-      cursor: pointer;
-    }
-
-    .delete-button:active {
-      opacity: 0.8;
     }
 
     /* Estado de ánimo */
@@ -282,17 +328,19 @@
 
     .mood-option {
       flex: 1;
-      border-radius: 10px;
+      border-radius: 12px;
       border: 1px solid #ddd;
-      padding: 6px 4px;
+      padding: 9px 4px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 2px;
+      gap: 3px;
       font-size: 0.8rem;
       cursor: pointer;
       user-select: none;
       background: #fafafa;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
     }
 
     .mood-option input {
@@ -302,10 +350,12 @@
     .mood-option.selected {
       border-color: #19692c;
       background: #e5f7ea;
+      transform: translateY(-1px) scale(1.02);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.08);
     }
 
     .mood-emoji {
-      font-size: 1.5rem;
+      font-size: 1.7rem;
       line-height: 1;
     }
 
@@ -350,63 +400,26 @@
       font-weight: 700;
     }
 
-    /* Tabs Turno / Lista */
-    .tab-switch {
-      display: flex;
-      gap: 4px;
-      align-items: center;
+    /* Tabla dashboard */
+    .dash-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+      margin-top: 4px;
+      border: 1px solid #ddd;
     }
 
-    .tab-btn {
-      font-size: 0.75rem;
-      padding: 3px 8px;
-      border-radius: 999px;
-      border: 1px solid #ccc;
-      background: #f5f5f5;
-      cursor: pointer;
+    .dash-table th,
+    .dash-table td {
+      padding: 4px 6px;
+      border: 1px solid #eee;
+      text-align: left;
+      vertical-align: top;
     }
 
-    .tab-btn.active {
-      background: #003f8c;
-      color: #fff;
-      border-color: #003f8c;
-    }
-
-    /* Lista de compras */
-    .lista-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      padding: 4px 0;
-      border-bottom: 1px dashed #eee;
-      font-size: 0.8rem;
-    }
-
-    .lista-item-main {
-      flex: 1;
-    }
-
-    .lista-cat {
+    .dash-table th {
+      background: #f7f7f7;
       font-weight: 600;
-    }
-
-    .lista-accion {
-      white-space: nowrap;
-    }
-
-    .lista-btn-small {
-      font-size: 0.7rem;
-      border-radius: 999px;
-      border: none;
-      padding: 2px 8px;
-      cursor: pointer;
-      background: #d4f5dd;
-      color: #19692c;
-    }
-
-    .lista-btn-small:active {
-      opacity: 0.8;
     }
   </style>
 </head>
@@ -415,112 +428,66 @@
     <h1>👵🏻 TERE - Registro de cuidado</h1>
     <div class="subtitle">
       <em>
-        Registro diario por turno<br />
+        Registro diario por turno<br>
         (comidas, agua, medicación y estado de ánimo)
       </em>
     </div>
-    <div class="today-label" id="currentDateLabel"></div>
+    <div id="currentDateLabel" class="date-label"></div>
 
-    <!-- Datos del turno + pestaña Lista -->
+    <!-- Datos generales -->
     <div class="card">
-      <h2>
-        <span>📅 Datos del turno</span>
-        <div class="tab-switch">
-          <button type="button" class="tab-btn active" id="tabTurno">Turno</button>
-          <button type="button" class="tab-btn" id="tabLista">Lista 🛒</button>
-        </div>
-      </h2>
-
-      <!-- Panel Turno -->
-      <div id="panelTurno">
-        <div class="two-cols">
-          <div class="row">
-            <label for="fecha">Fecha</label>
-            <input type="date" id="fecha" />
-          </div>
-          <div class="row">
-            <label for="turno">Turno</label>
-            <select id="turno">
-              <option value="maniana">Mañana</option>
-              <option value="tarde">Tarde</option>
-              <option value="noche">Noche</option>
-              <option value="completo">24 hs</option>
-            </select>
-          </div>
+      <h2>📅 Datos del turno</h2>
+      <div class="two-cols">
+        <div class="row">
+          <label for="fecha">Fecha</label>
+          <input type="date" id="fecha">
         </div>
         <div class="row">
-          <label for="cuidador">Cuidadora</label>
-          <select id="cuidador">
-            <option value="guadalupe">Guadalupe</option>
-            <option value="aylen">Aylén</option>
-            <option value="noelia">Noelia</option>
-            <option value="rocio">Rocío</option>
-            <option value="otro">Familiar / Otro</option>
+          <label for="turno">Turno</label>
+          <select id="turno">
+            <option value="maniana">Mañana</option>
+            <option value="tarde">Tarde</option>
+            <option value="noche">Noche</option>
+            <option value="completo">24 hs</option>
           </select>
         </div>
-        <div class="small-text" id="suggestInfo"></div>
-        <div class="saved-message" id="savedMessage"></div>
-        <div class="small-text" id="turnoInfo"></div>
-
-        <button type="button" class="small-chip secondary" id="btnTurnoAhora" style="margin-top:6px;">
-          Turno en curso
-        </button>
       </div>
-
-      <!-- Panel Lista de compras -->
-      <div id="panelLista" style="display:none; margin-top:4px;">
-        <div class="small-text" style="margin-bottom:6px;">
-          Usá esta pestaña para ir anotando lo que falte comprar. Se guarda en la base y se ve igual desde cualquier dispositivo.
-        </div>
-
-        <div class="row">
-          <label for="listaCategoria">Categoría</label>
-          <select id="listaCategoria">
-            <option value="almacen">Almacén</option>
-            <option value="verduleria">Verdulería</option>
-            <option value="carniceria">Carnicería</option>
-            <option value="otro">Otro</option>
-          </select>
-        </div>
-
-        <div class="row">
-          <label for="listaItem">Producto</label>
-          <input type="text" id="listaItem" placeholder="Ej: yogur bebible" />
-        </div>
-
-        <div class="row">
-          <label for="listaCantidad">Cantidad</label>
-          <input type="text" id="listaCantidad" placeholder="Ej: 1 unidad, 1 paquete" />
-        </div>
-
-        <button type="button" class="export-btn" id="listaAgregar">➕ Agregar a la lista</button>
-
-        <div class="small-text" style="margin-top:8px;">Pendientes:</div>
-        <div id="listaPendientes" class="small-text" style="margin-top:4px;"></div>
+      <div class="row">
+        <label for="cuidador">Cuidadora</label>
+        <select id="cuidador">
+          <option value="guadalupe">Guadalupe</option>
+          <option value="aylen">Aylén</option>
+          <option value="noelia">Noelia</option>
+          <option value="rocio">Rocío</option>
+          <option value="otro">Familiar / Otro</option>
+        </select>
       </div>
+      <div class="small-text" id="suggestInfo"></div>
+      <div class="saved-message" id="savedMessage"></div>
+      <div class="small-text" id="turnoInfo"></div>
     </div>
 
     <!-- Comidas -->
     <div class="card">
       <h2>
-        <span>🍳 Comidas del día</span>
+        🍳​ Comidas del día
         <span id="statusComidas" class="status-pill"></span>
       </h2>
       <div class="checkbox-grid">
         <label class="checkbox-item">
-          <input type="checkbox" id="desayuno" />
+          <input type="checkbox" id="desayuno">
           <span>Desayuno</span>
         </label>
         <label class="checkbox-item">
-          <input type="checkbox" id="almuerzo" />
+          <input type="checkbox" id="almuerzo">
           <span>Almuerzo</span>
         </label>
         <label class="checkbox-item">
-          <input type="checkbox" id="merienda" />
+          <input type="checkbox" id="merienda">
           <span>Merienda</span>
         </label>
         <label class="checkbox-item">
-          <input type="checkbox" id="cena" />
+          <input type="checkbox" id="cena">
           <span>Cena</span>
         </label>
       </div>
@@ -529,10 +496,10 @@
 
     <!-- Agua -->
     <div class="card">
-      <h2>💧 Agua (día completo)</h2>
+      <h2>💧 Agua (por turno)</h2>
       <div class="row">
         <label for="aguaVasos">Vasos tomados en el día</label>
-        <input type="number" id="aguaVasos" min="0" max="40" step="1" inputmode="numeric" />
+        <input type="number" id="aguaVasos" min="0" max="40" step="1" inputmode="numeric">
       </div>
       <div class="small-text">Actualizar a lo largo del día. Se consolida entre turnos.</div>
     </div>
@@ -540,16 +507,16 @@
     <!-- Medicación -->
     <div class="card">
       <h2>
-        <span>💊 Medicación del día</span>
+        💊 Medicación del día
         <span id="statusMed" class="status-pill"></span>
       </h2>
       <div class="checkbox-grid">
         <label class="checkbox-item">
-          <input type="checkbox" id="medManiana" />
+          <input type="checkbox" id="medManiana">
           <span>Mañana</span>
         </label>
         <label class="checkbox-item">
-          <input type="checkbox" id="medNoche" />
+          <input type="checkbox" id="medNoche">
           <span>Noche</span>
         </label>
       </div>
@@ -563,17 +530,17 @@
       <h2>Estado de ánimo (turno)</h2>
       <div class="mood-group">
         <label class="mood-option">
-          <input type="radio" name="estadoAnimo" value="bien" />
+          <input type="radio" name="estadoAnimo" value="bien">
           <span class="mood-emoji">🙂</span>
           <span class="mood-label">Bien</span>
         </label>
         <label class="mood-option">
-          <input type="radio" name="estadoAnimo" value="neutral" />
+          <input type="radio" name="estadoAnimo" value="neutral">
           <span class="mood-emoji">😐</span>
           <span class="mood-label">Normal</span>
         </label>
         <label class="mood-option">
-          <input type="radio" name="estadoAnimo" value="mal" />
+          <input type="radio" name="estadoAnimo" value="mal">
           <span class="mood-emoji">😟</span>
           <span class="mood-label">Mal</span>
         </label>
@@ -594,23 +561,196 @@
     <!-- Estado general día -->
     <div class="card">
       <h2>Resumen rápido del día</h2>
+      <div class="day-status-panel">
+        <span class="day-status-icon">🩺</span>
+        <span id="statusDia" class="status-pill"></span>
+      </div>
       <div id="resumenTexto" class="small-text"></div>
     </div>
 
     <!-- Historial -->
     <div class="card">
       <h2>Historial reciente</h2>
-      <div class="small-text">
-        Ver últimos turnos registrados. Tocá un ítem para cargarlo en el formulario.<br />
-        El resumen se consolida por día (comidas, medicación y agua).<br />
-        <span>⬜ Turno vacío &nbsp;&nbsp; ⬜ Turno incompleto</span>
+      <div class="small-text" style="margin-bottom:4px;">
+        Ver últimos turnos registrados. Tocá un ítem para cargarlo en el formulario.<br>
+        El resumen se consolida por día (comidas, medicación y agua).
+      </div>
+      <div class="small-text" style="margin-bottom:6px;">
+        <span style="display:inline-flex;align-items:center;gap:4px;margin-right:8px;">
+          <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff0f0;border:1px solid #ffb3b3;"></span>
+          Turno vacío
+        </span>
+        <span style="display:inline-flex;align-items:center;gap:4px;">
+          <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fff8ee;border:1px solid #ffe0b3;"></span>
+          Turno incompleto
+        </span>
       </div>
       <div id="historialLista" class="history-list"></div>
     </div>
 
+      <!-- Lista de compras -->
+    <div class="card">
+      <h2>🧺 Lista de compras</h2>
+      <div class="small-text">
+        Marcá lo que FALTA comprar. La lista se guarda en este dispositivo.
+      </div>
+
+      <div class="small-text" style="margin-top:6px;margin-bottom:4px;"><strong>Almacén</strong></div>
+      <div class="checkbox-grid">
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Yogur bebible">
+          <span>Yogur bebible</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Galletitas dulces">
+          <span>Galletitas dulces (pepas, vainillas, obleas...)</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Galletitas de agua">
+          <span>Galletitas de agua</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Papel higiénico">
+          <span>Papel higiénico</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Rollo cocina">
+          <span>Rollo cocina</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Jabón de tocador">
+          <span>Jabón de tocador</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Jabón blanco">
+          <span>Jabón blanco</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Vinagre">
+          <span>Vinagre</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Aceite">
+          <span>Aceite</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Manteca">
+          <span>Manteca</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Dulce de membrillo/batata">
+          <span>Dulce de membrillo o batata</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Pan lactal chico">
+          <span>Pan lactal chico</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Mermelada">
+          <span>Mermelada</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Lavandina">
+          <span>Lavandina</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Desodorante piso">
+          <span>Desodorante piso</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Detergente">
+          <span>Detergente</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Café instantáneo">
+          <span>Frasco café instantáneo</span>
+        </label>
+      </div>
+
+      <div class="small-text" style="margin-top:10px;margin-bottom:4px;"><strong>Verdulería</strong></div>
+      <div class="checkbox-grid">
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Papas">
+          <span>4 papas</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Cebollas">
+          <span>3 cebollas</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Zanahorias">
+          <span>2 o 3 zanahorias</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Zapallitos">
+          <span>3 zapallitos / zucchini</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Calabaza">
+          <span>1/2 calabaza</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Tomates">
+          <span>3 tomates</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Lechuga">
+          <span>1 lechuga chica</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Espinaca/Acelga">
+          <span>1 atado de espinaca o acelga</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Huevos">
+          <span>1/2 docena de huevos</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Naranjas">
+          <span>4 naranjas</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Mandarinas">
+          <span>4 mandarinas</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Bananas">
+          <span>3 o 4 bananas</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Peras/Duraznos">
+          <span>2 o 3 peras / duraznos</span>
+        </label>
+      </div>
+
+      <div class="small-text" style="margin-top:10px;margin-bottom:4px;"><strong>Carnicería</strong></div>
+      <div class="checkbox-grid">
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Milanesas de pollo">
+          <span>2 o 3 milanesas de pollo</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Pechugas de pollo">
+          <span>2 o 3 pechugas</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" class="chk-compra" data-item="Cerdo tierno">
+          <span>1 trozo de cerdo tierno</span>
+        </label>
+      </div>
+
+      <div class="row" style="margin-top:10px;">
+        <label for="comprasOtros">Otros / notas</label>
+        <textarea id="comprasOtros" placeholder="Ej: edulcorante, té de manzanilla, leche deslactosada..."></textarea>
+      </div>
+      <div class="small-text">
+        Podés usar esta lista directamente en el súper: lo que está tildado es lo que falta comprar.
+      </div>
+    </div>
+    
     <!-- Calendario de turnos -->
     <div class="card">
-      <h2>🗓️ Calendario de turnos</h2>
+      <h2>🗓️​ Calendario de turnos</h2>
       <div class="small-text">Referencia según el cronograma acordado.</div>
       <table class="schedule-table">
         <thead>
@@ -623,35 +763,35 @@
           <tr>
             <td>Lunes</td>
             <td>
-              12:00 a 18:00 — <strong>GUADA</strong><br />
+              12:00 a 18:00 — <strong>GUADA</strong><br>
               20:00 a 08:00 — <strong>NOELIA</strong> <small>(hasta el martes)</small>
             </td>
           </tr>
           <tr>
             <td>Martes</td>
             <td>
-              12:00 a 16:00 — <strong>AYLÉN</strong><br />
+              12:00 a 16:00 — <strong>AYLÉN</strong><br>
               21:00 a 12:00 — <strong>GUADA</strong> <small>(hasta el miércoles)</small>
             </td>
           </tr>
           <tr>
             <td>Miércoles</td>
             <td>
-              12:00 a 18:00 — <strong>GUADA</strong><br />
+              12:00 a 18:00 — <strong>GUADA</strong><br>
               20:00 a 08:00 — <strong>NOELIA</strong> <small>(hasta el jueves)</small>
             </td>
           </tr>
           <tr>
             <td>Jueves</td>
             <td>
-              12:00 a 16:00 — <strong>AYLÉN</strong><br />
+              12:00 a 16:00 — <strong>AYLÉN</strong><br>
               20:00 a 08:00 — <strong>NOELIA</strong> <small>(hasta el viernes)</small>
             </td>
           </tr>
           <tr>
             <td>Viernes</td>
             <td>
-              09:00 a 18:00 — <strong>GUADA</strong><br />
+              09:00 a 18:00 — <strong>GUADA</strong><br>
               20:00 a 08:00 — <strong>NOELIA</strong> <small>(hasta el sábado)</small>
             </td>
           </tr>
@@ -671,8 +811,30 @@
       </table>
     </div>
 
-    <!-- Exportar -->
-    <div class="card">
+    <!-- 📊 Resumen de período (solo modo familia / lectura) -->
+    <div class="card" id="card-resumen-periodo" style="display:none;">
+      <h2>📊 Resumen de período</h2>
+      <div class="two-cols">
+        <div class="row">
+          <label for="dashDesde">Desde</label>
+          <input type="date" id="dashDesde">
+        </div>
+        <div class="row">
+          <label for="dashHasta">Hasta</label>
+          <input type="date" id="dashHasta">
+        </div>
+      </div>
+      <button class="export-btn" id="dashActualizar">Actualizar resumen</button>
+
+      <div class="small-text" style="margin-top:8px;" id="dashIndicadores">
+        Seleccioná un rango de fechas y tocá "Actualizar resumen".
+      </div>
+
+      <div id="dashTabla" class="small-text" style="margin-top:8px; overflow-x:auto;"></div>
+    </div>
+
+    <!-- Exportar (solo modo familia / lectura) -->
+    <div class="card" id="card-exportar" style="display:none;">
       <h2>Exportar registros</h2>
       <button class="export-btn" id="exportDia">⬇️ Exportar día a Excel / Sheets</button>
       <div class="small-text">Genera un CSV con todos los turnos del día seleccionado.</div>
@@ -685,20 +847,22 @@
 
   <script>
     const API_BASE = "/api";
-    const DELETE_PIN = "1955";
+
+    // 🔒 Modo lectura vía ?view=readonly (link para familia)
+    const params = new URLSearchParams(window.location.search);
+    const READ_ONLY = params.get("view") === "readonly";
+
+    // 🔐 PIN para borrar registros
+    const DELETE_PIN = "2905";
 
     async function apiGuardar(record) {
       const res = await fetch(API_BASE + "/guardar-registro", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(record),
+        body: JSON.stringify(record)
       });
       if (!res.ok) throw new Error("Error al guardar registro");
-      try {
-        return await res.json();
-      } catch {
-        return {};
-      }
+      try { return await res.json(); } catch { return {}; }
     }
 
     async function apiListar(params = {}) {
@@ -721,113 +885,164 @@
       return await res.json();
     }
 
-    /* API lista de compras */
-    async function apiComprasListar() {
-      const url = new URL(API_BASE + "/compras-listar", window.location.origin);
-      const res = await fetch(url.toString());
-      if (!res.ok) throw new Error("Error al listar compras");
-      return await res.json(); // se espera array de items
+    // ==== Helpers para exportar CSV en el cliente ====
+    function escapeCSV(value) {
+      if (value === null || value === undefined) return "";
+      const s = String(value);
+      if (/[",\n\r]/.test(s)) {
+        return `"${s.replace(/"/g, '""')}"`;
+      }
+      return s;
     }
 
-    async function apiComprasAgregar(item) {
-      const res = await fetch(API_BASE + "/compras-agregar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(item),
-      });
-      if (!res.ok) throw new Error("Error al agregar compra");
-      return await res.json();
+    async function exportarCsvDia(fechaStr) {
+      try {
+        const registros = await apiListar({ fecha: fechaStr });
+
+        const headers = [
+          "fecha",
+          "turno",
+          "cuidadora",
+          "desayuno",
+          "almuerzo",
+          "merienda",
+          "cena",
+          "agua_vasos",
+          "med_maniana",
+          "med_noche",
+          "estado_animo",
+          "notas"
+        ];
+
+        const lines = [];
+        lines.push(headers.join(","));
+
+        registros.forEach(r => {
+          const fechaOut = formatFechaISO(r.fecha);
+          const row = [
+            fechaOut,
+            r.turno || "",
+            r.cuidador || "",
+            r.desayuno ? 1 : 0,
+            r.almuerzo ? 1 : 0,
+            r.merienda ? 1 : 0,
+            r.cena ? 1 : 0,
+            r.agua_vasos ?? 0,
+            r.med_maniana ? 1 : 0,
+            r.med_noche ? 1 : 0,
+            r.estado_animo || "",
+            r.notas || ""
+          ].map(escapeCSV);
+
+          lines.push(row.join(","));
+        });
+
+        const csv = lines.join("\n");
+        const bom = "\uFEFF";
+        const blob = new Blob([bom + csv], {
+          type: "text/csv;charset=utf-8;"
+        });
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `teresita_registros_${fechaStr}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        console.error(e);
+        alert("No se pudo exportar el CSV. Revisar conexión.");
+      }
     }
 
-    async function apiComprasMarcarComprado(id) {
-      const res = await fetch(API_BASE + "/compras-marcar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, estado: "comprado" }),
-      });
-      if (!res.ok) throw new Error("Error al marcar compra");
-      return await res.json();
+    function formatFechaISO(fecha) {
+      if (!fecha) return "";
+      if (fecha instanceof Date) {
+        return fecha.toISOString().slice(0, 10);
+      }
+      return String(fecha).slice(0, 10);
     }
 
-    /* DOM refs */
+    const fechaInput       = document.getElementById("fecha");
+    const turnoSelect      = document.getElementById("turno");
+    const cuidadorSelect   = document.getElementById("cuidador");
+    const desayunoInput    = document.getElementById("desayuno");
+    const almuerzoInput    = document.getElementById("almuerzo");
+    const meriendaInput    = document.getElementById("merienda");
+    const cenaInput        = document.getElementById("cena");
+    const aguaInput        = document.getElementById("aguaVasos");
+    const medManianaInput  = document.getElementById("medManiana");
+    const medNocheInput    = document.getElementById("medNoche");
+    const notasInput       = document.getElementById("notas");
+    const statusComidas    = document.getElementById("statusComidas");
+    const statusMed        = document.getElementById("statusMed");
+    const statusDia        = document.getElementById("statusDia");
+    const resumenTexto     = document.getElementById("resumenTexto");
+    const savedMessage     = document.getElementById("savedMessage");
+    const resetDiaBtn      = document.getElementById("resetDia");
+    const historialLista   = document.getElementById("historialLista");
+    const suggestInfo      = document.getElementById("suggestInfo");
+    const turnoInfo        = document.getElementById("turnoInfo");
+    const exportDiaBtn     = document.getElementById("exportDia");
     const currentDateLabel = document.getElementById("currentDateLabel");
 
-    const fechaInput = document.getElementById("fecha");
-    const turnoSelect = document.getElementById("turno");
-    const cuidadorSelect = document.getElementById("cuidador");
+    const dashDesdeInput   = document.getElementById("dashDesde");
+    const dashHastaInput   = document.getElementById("dashHasta");
+    const dashActualizarBtn= document.getElementById("dashActualizar");
+    const dashIndicadores  = document.getElementById("dashIndicadores");
+    const dashTabla        = document.getElementById("dashTabla");
 
-    const desayunoInput = document.getElementById("desayuno");
-    const almuerzoInput = document.getElementById("almuerzo");
-    const meriendaInput = document.getElementById("merienda");
-    const cenaInput = document.getElementById("cena");
-    const aguaInput = document.getElementById("aguaVasos");
-    const medManianaInput = document.getElementById("medManiana");
-    const medNocheInput = document.getElementById("medNoche");
-    const notasInput = document.getElementById("notas");
+    const cardResumenPeriodo = document.getElementById("card-resumen-periodo");
+    const cardExportar       = document.getElementById("card-exportar");
 
-    const statusComidas = document.getElementById("statusComidas");
-    const statusMed = document.getElementById("statusMed");
-    const resumenTexto = document.getElementById("resumenTexto");
-    const savedMessage = document.getElementById("savedMessage");
-    const resetDiaBtn = document.getElementById("resetDia");
-    const historialLista = document.getElementById("historialLista");
-    const suggestInfo = document.getElementById("suggestInfo");
-    const turnoInfo = document.getElementById("turnoInfo");
-    const exportDiaBtn = document.getElementById("exportDia");
-    const btnTurnoAhora = document.getElementById("btnTurnoAhora");
+    const moodOptions      = document.querySelectorAll(".mood-option");
+    const moodRadios       = document.querySelectorAll('input[name="estadoAnimo"]');
 
-    const moodOptions = document.querySelectorAll(".mood-option");
-    const moodRadios = document.querySelectorAll('input[name="estadoAnimo"]');
+    const comprasChecks   = document.querySelectorAll(".chk-compra");
+    const comprasOtros    = document.getElementById("comprasOtros");
+    const STORAGE_KEY_COMPRAS = "teresita_lista_compras_v1";
 
-    const tabTurno = document.getElementById("tabTurno");
-    const tabLista = document.getElementById("tabLista");
-    const panelTurno = document.getElementById("panelTurno");
-    const panelLista = document.getElementById("panelLista");
-
-    const listaCategoria = document.getElementById("listaCategoria");
-    const listaItem = document.getElementById("listaItem");
-    const listaCantidad = document.getElementById("listaCantidad");
-    const listaAgregarBtn = document.getElementById("listaAgregar");
-    const listaPendientes = document.getElementById("listaPendientes");
 
     let saveTimeout = null;
     let lastCuidadorValue = cuidadorSelect.value;
-    let listaComprasData = [];
+    let lastTurnoValue    = turnoSelect.value;
 
     const schedule = {
       1: [
-        { from: 0, to: 8 * 60, cuidador: "rocio" },
-        { from: 12 * 60, to: 18 * 60, cuidador: "guadalupe" },
-        { from: 20 * 60, to: 24 * 60, cuidador: "noelia" },
+        { from: 0,        to: 8 * 60,  cuidador: "rocio"     },
+        { from: 12 * 60,  to: 18 * 60, cuidador: "guadalupe" },
+        { from: 20 * 60,  to: 24 * 60, cuidador: "noelia"    }
       ],
       2: [
-        { from: 0, to: 8 * 60, cuidador: "noelia" },
-        { from: 12 * 60, to: 16 * 60, cuidador: "aylen" },
-        { from: 21 * 60, to: 24 * 60, cuidador: "guadalupe" },
+        { from: 0,        to: 8 * 60,  cuidador: "noelia"    },
+        { from: 12 * 60,  to: 16 * 60, cuidador: "aylen"     },
+        { from: 21 * 60,  to: 24 * 60, cuidador: "guadalupe" }
       ],
       3: [
-        { from: 0, to: 12 * 60, cuidador: "guadalupe" },
-        { from: 12 * 60, to: 18 * 60, cuidador: "guadalupe" },
-        { from: 20 * 60, to: 24 * 60, cuidador: "noelia" },
+        { from: 0,        to: 12 * 60, cuidador: "guadalupe" },
+        { from: 12 * 60,  to: 18 * 60, cuidador: "guadalupe" },
+        { from: 20 * 60,  to: 24 * 60, cuidador: "noelia"    }
       ],
       4: [
-        { from: 0, to: 8 * 60, cuidador: "noelia" },
-        { from: 12 * 60, to: 16 * 60, cuidador: "aylen" },
-        { from: 20 * 60, to: 24 * 60, cuidador: "noelia" },
+        { from: 0,        to: 8 * 60,  cuidador: "noelia"    },
+        { from: 12 * 60,  to: 16 * 60, cuidador: "aylen"     },
+        { from: 20 * 60,  to: 24 * 60, cuidador: "noelia"    }
       ],
       5: [
-        { from: 0, to: 8 * 60, cuidador: "noelia" },
-        { from: 9 * 60, to: 18 * 60, cuidador: "guadalupe" },
-        { from: 20 * 60, to: 24 * 60, cuidador: "noelia" },
+        { from: 0,        to: 8 * 60,  cuidador: "noelia"    },
+        { from: 9 * 60,   to: 18 * 60, cuidador: "guadalupe" },
+        { from: 20 * 60,  to: 24 * 60, cuidador: "noelia"    }
       ],
       6: [
-        { from: 0, to: 8 * 60, cuidador: "noelia" },
-        { from: 20 * 60, to: 24 * 60, cuidador: "rocio" },
+        { from: 0,        to: 8 * 60,  cuidador: "noelia"    },
+        { from: 20 * 60,  to: 24 * 60, cuidador: "rocio"     }
       ],
       0: [
-        { from: 0, to: 8 * 60, cuidador: "rocio" },
-        { from: 19 * 60, to: 24 * 60, cuidador: "rocio" },
-      ],
+        { from: 0,        to: 8 * 60,  cuidador: "rocio"     },
+        { from: 19 * 60,  to: 24 * 60, cuidador: "rocio"     }
+      ]
     };
 
     function hoyISO() {
@@ -838,17 +1053,19 @@
       return `${y}-${m}-${d}`;
     }
 
-    function formatHoyHumano() {
-      const hoy = new Date();
-      const opts = { weekday: "long", year: "numeric", month: "2-digit", day: "2-digit" };
-      return hoy.toLocaleDateString("es-AR", opts);
+    function formatFecha(fechaStr) {
+      if (!fechaStr) return "-";
+      const base = fechaStr.slice(0, 10);
+      const [y, m, d] = base.split("-");
+      if (!y || !m || !d) return fechaStr;
+      return `${d}/${m}/${y}`;
     }
 
     function getNowInfo() {
       const now = new Date();
       const dow = now.getDay();
       const minutes = now.getHours() * 60 + now.getMinutes();
-      return { dow, minutes, now };
+      return { dow, minutes };
     }
 
     function getCaregiverFor(dow, minutes) {
@@ -890,14 +1107,12 @@
 
     function getSelectedMood() {
       let value = "";
-      moodRadios.forEach((r) => {
-        if (r.checked) value = r.value;
-      });
+      moodRadios.forEach(r => { if (r.checked) value = r.value; });
       return value;
     }
 
     function setMoodUI(value) {
-      moodOptions.forEach((opt) => {
+      moodOptions.forEach(opt => {
         const radio = opt.querySelector('input[name="estadoAnimo"]');
         const match = radio.value === value;
         radio.checked = match;
@@ -918,65 +1133,87 @@
 
     function labelCuidador(value) {
       switch (value) {
-        case "guadalupe":
-          return "Guadalupe";
-        case "aylen":
-          return "Aylén";
-        case "noelia":
-          return "Noelia";
-        case "rocio":
-          return "Rocío";
-        case "otro":
-          return "Familiar / Otro";
-        default:
-          return value;
+        case "guadalupe": return "Guadalupe";
+        case "aylen":     return "Aylén";
+        case "noelia":    return "Noelia";
+        case "rocio":     return "Rocío";
+        case "otro":      return "Familiar / Otro";
+        default:          return value;
       }
     }
 
     function labelTurno(value) {
       switch (value) {
-        case "maniana":
-          return "Mañana";
-        case "tarde":
-          return "Tarde";
-        case "noche":
-          return "Noche";
-        case "completo":
-          return "24 hs";
-        default:
-          return value || "-";
+        case "maniana": return "Mañana";
+        case "tarde":   return "Tarde";
+        case "noche":   return "Noche";
+        case "completo":return "24 hs";
+        default:        return value || "-";
       }
     }
 
-    function labelCategoria(cat) {
-      switch (cat) {
-        case "almacen":
-          return "Almacén";
-        case "verduleria":
-          return "Verdulería";
-        case "carniceria":
-          return "Carnicería";
-        default:
-          return "Otro";
-      }
-    }
-
-    function formatFecha(fechaStr) {
-      if (!fechaStr) return "-";
-      const base = fechaStr.slice(0, 10);
-      const [y, m, d] = base.split("-");
-      if (!y || !m || !d) return fechaStr;
-      return `${d}/${m}/${y}`;
+    function getHoraDesdeRec(rec) {
+      const raw = rec.created_at || rec.hora || rec.fecha_hora;
+      if (!raw) return "";
+      const date = new Date(raw);
+      if (isNaN(date.getTime())) return "";
+      const hh = String(date.getHours()).padStart(2, "0");
+      const mm = String(date.getMinutes()).padStart(2, "0");
+      // 👇 Ajuste: hora simple, sin "hs"
+      return `${hh}:${mm}`;
     }
 
     function mostrarGuardado() {
-      savedMessage.textContent = "Guardado en TERE ✅";
+      const ahora = new Date();
+      const hh = String(ahora.getHours()).padStart(2, "0");
+      const mm = String(ahora.getMinutes()).padStart(2, "0");
+      savedMessage.textContent = `Guardado en TERE ✅ ${hh}:${mm}`;
+      savedMessage.classList.add("visible");
       if (saveTimeout) clearTimeout(saveTimeout);
       saveTimeout = setTimeout(() => {
-        savedMessage.textContent = "";
+        savedMessage.classList.remove("visible");
       }, 1500);
     }
 
+    // ===== Lista de compras (localStorage en el dispositivo) =====
+    function loadListaCompras() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY_COMPRAS);
+        if (!raw) return;
+        const data = JSON.parse(raw);
+
+        if (Array.isArray(data.items)) {
+          comprasChecks.forEach(chk => {
+            const item = chk.dataset.item;
+            chk.checked = data.items.includes(item);
+          });
+        }
+        if (typeof data.otros === "string" && comprasOtros) {
+          comprasOtros.value = data.otros;
+        }
+      } catch (e) {
+        console.error("Error al cargar lista de compras:", e);
+      }
+    }
+
+    function saveListaCompras() {
+      try {
+        const itemsMarcados = Array.from(comprasChecks || [])
+          .filter(chk => chk.checked)
+          .map(chk => chk.dataset.item);
+
+        const payload = {
+          items: itemsMarcados,
+          otros: comprasOtros ? (comprasOtros.value || "") : ""
+        };
+
+        localStorage.setItem(STORAGE_KEY_COMPRAS, JSON.stringify(payload));
+      } catch (e) {
+        console.error("Error al guardar lista de compras:", e);
+      }
+    }
+
+    
     async function fetchRecordForCurrentKey() {
       const fecha = fechaInput.value || hoyISO();
       const cuidador = cuidadorSelect.value;
@@ -999,7 +1236,7 @@
         medManiana: !!r.med_maniana,
         medNoche: !!r.med_noche,
         notas: r.notas || "",
-        estadoAnimo: r.estado_animo || "",
+        estadoAnimo: r.estado_animo || ""
       };
     }
 
@@ -1014,17 +1251,17 @@
         medManiana: false,
         medNoche: false,
         aguaVasos: 0,
-        turnos: 0,
+        turnos: 0
       };
 
-      registros.forEach((rec) => {
+      registros.forEach(rec => {
         result.turnos += 1;
-        if (rec.desayuno) result.desayuno = true;
-        if (rec.almuerzo) result.almuerzo = true;
-        if (rec.merienda) result.merienda = true;
-        if (rec.cena) result.cena = true;
-        if (rec.med_maniana) result.medManiana = true;
-        if (rec.med_noche) result.medNoche = true;
+        if (rec.desayuno)      result.desayuno = true;
+        if (rec.almuerzo)      result.almuerzo = true;
+        if (rec.merienda)      result.merienda = true;
+        if (rec.cena)          result.cena = true;
+        if (rec.med_maniana)   result.medManiana = true;
+        if (rec.med_noche)     result.medNoche = true;
         const agua = rec.agua_vasos || 0;
         if (agua > result.aguaVasos) result.aguaVasos = agua;
       });
@@ -1033,6 +1270,7 @@
     }
 
     async function saveCurrentRecord() {
+      if (READ_ONLY) return;
       const record = {
         fecha: fechaInput.value || hoyISO(),
         turno: turnoSelect.value,
@@ -1045,7 +1283,7 @@
         medManiana: medManianaInput.checked,
         medNoche: medNocheInput.checked,
         notas: notasInput.value || "",
-        estadoAnimo: getSelectedMood(),
+        estadoAnimo: getSelectedMood()
       };
 
       try {
@@ -1063,87 +1301,79 @@
       try {
         const rec = await fetchRecordForCurrentKey();
         if (rec) {
-          desayunoInput.checked = rec.desayuno;
-          almuerzoInput.checked = rec.almuerzo;
-          meriendaInput.checked = rec.merienda;
-          cenaInput.checked = rec.cena;
-          aguaInput.value = rec.aguaVasos || "";
+          desayunoInput.checked   = rec.desayuno;
+          almuerzoInput.checked   = rec.almuerzo;
+          meriendaInput.checked   = rec.merienda;
+          cenaInput.checked       = rec.cena;
+          aguaInput.value         = rec.aguaVasos || "";
           medManianaInput.checked = rec.medManiana;
-          medNocheInput.checked = rec.medNoche;
-          notasInput.value = rec.notas || "";
+          medNocheInput.checked   = rec.medNoche;
+          notasInput.value        = rec.notas || "";
           setMoodUI(rec.estadoAnimo);
+          turnoInfo.textContent   = "Turno ya registrado. Estás consultando o editando la información guardada.";
         } else {
-          desayunoInput.checked = false;
-          almuerzoInput.checked = false;
-          meriendaInput.checked = false;
-          cenaInput.checked = false;
-          aguaInput.value = "";
+          desayunoInput.checked   = false;
+          almuerzoInput.checked   = false;
+          meriendaInput.checked   = false;
+          cenaInput.checked       = false;
+          aguaInput.value         = "";
           medManianaInput.checked = false;
-          medNocheInput.checked = false;
-          notasInput.value = "";
+          medNocheInput.checked   = false;
+          notasInput.value        = "";
           clearMoodUI();
+          turnoInfo.textContent   = "Turno nuevo para este día y horario.";
         }
         await actualizarEstadosVisuales();
-        savedMessage.textContent = "";
       } catch (e) {
         console.error(e);
       }
     }
 
     async function resetCurrentRecord() {
-      desayunoInput.checked = false;
-      almuerzoInput.checked = false;
-      meriendaInput.checked = false;
-      cenaInput.checked = false;
-      aguaInput.value = "";
+      if (READ_ONLY) return;
+      desayunoInput.checked   = false;
+      almuerzoInput.checked   = false;
+      meriendaInput.checked   = false;
+      cenaInput.checked       = false;
+      aguaInput.value         = "";
       medManianaInput.checked = false;
-      medNocheInput.checked = false;
-      notasInput.value = "";
+      medNocheInput.checked   = false;
+      notasInput.value        = "";
       clearMoodUI();
       await saveCurrentRecord();
     }
 
     async function actualizarEstadosVisuales() {
-      const anyMeal =
-        desayunoInput.checked ||
-        almuerzoInput.checked ||
-        meriendaInput.checked ||
-        cenaInput.checked;
-      const allMeals =
-        desayunoInput.checked &&
-        almuerzoInput.checked &&
-        meriendaInput.checked &&
-        cenaInput.checked;
+      const anyMeal = desayunoInput.checked || almuerzoInput.checked ||
+                      meriendaInput.checked || cenaInput.checked;
+      const allMeals = desayunoInput.checked && almuerzoInput.checked &&
+                       meriendaInput.checked && cenaInput.checked;
 
+      statusComidas.classList.remove("status-ok", "status-pending", "status-bad");
       if (allMeals) {
         statusComidas.textContent = "Comidas completas (turno)";
         statusComidas.classList.add("status-ok");
-        statusComidas.classList.remove("status-pending");
       } else if (anyMeal) {
         statusComidas.textContent = "Comidas incompletas (turno)";
         statusComidas.classList.add("status-pending");
-        statusComidas.classList.remove("status-ok");
       } else {
         statusComidas.textContent = "Sin comidas registradas en este turno";
         statusComidas.classList.add("status-pending");
-        statusComidas.classList.remove("status-ok");
       }
 
       const medAny = medManianaInput.checked || medNocheInput.checked;
       const medAll = medManianaInput.checked && medNocheInput.checked;
 
+      statusMed.classList.remove("status-ok", "status-pending", "status-bad");
       if (medAll) {
         statusMed.textContent = "Medicación completa (turno)";
         statusMed.classList.add("status-ok");
-        statusMed.classList.remove("status-pending");
       } else if (medAny) {
         statusMed.textContent = "Medicación incompleta (turno)";
         statusMed.classList.add("status-pending");
-        statusMed.classList.remove("status-ok");
       } else {
         statusMed.textContent = "Sin medicación registrada en este turno";
         statusMed.classList.add("status-pending");
-        statusMed.classList.remove("status-ok");
       }
 
       const fechaDia = fechaInput.value || hoyISO();
@@ -1151,28 +1381,22 @@
         const daily = await getDailySummary(fechaDia);
         const partes = [];
 
-        const todasComidasDia =
-          daily.desayuno && daily.almuerzo && daily.merienda && daily.cena;
+        const todasComidasDia = daily.desayuno && daily.almuerzo &&
+                                daily.merienda && daily.cena;
 
         if (todasComidasDia) {
-          partes.push(
-            "✅ Todas las comidas del día registradas (desayuno, almuerzo, merienda y cena)."
-          );
+          partes.push("✅ Todas las comidas del día registradas (desayuno, almuerzo, merienda y cena).");
         } else {
           const faltantes = [];
           if (!daily.desayuno) faltantes.push("desayuno");
           if (!daily.almuerzo) faltantes.push("almuerzo");
           if (!daily.merienda) faltantes.push("merienda");
-          if (!daily.cena) faltantes.push("cena");
-          partes.push(
-            `⚠️ Faltan comidas por registrar: ${faltantes.join(", ")}.`
-          );
+          if (!daily.cena)     faltantes.push("cena");
+          partes.push(`⚠️ Faltan comidas por registrar: ${faltantes.join(", ")}.`);
         }
 
         if (daily.medManiana && daily.medNoche) {
-          partes.push(
-            "✅ Medicación del día completa (mañana y noche registradas en al menos un turno)."
-          );
+          partes.push("✅ Medicación del día completa (mañana y noche registradas en al menos un turno).");
         } else if (daily.medManiana || daily.medNoche) {
           partes.push("⚠️ Medicación incompleta (sólo una franja registrada).");
         } else {
@@ -1181,9 +1405,7 @@
 
         const vasos = daily.aguaVasos || 0;
         if (vasos > 0) {
-          partes.push(
-            `💧 Se registraron ${vasos} vaso(s) de agua en el día (valor consolidado).`
-          );
+          partes.push(`💧 Se registraron ${vasos} vaso(s) de agua en el día (valor consolidado).`);
         } else {
           partes.push("💧 No se registró agua para este día.");
         }
@@ -1195,10 +1417,30 @@
         }
 
         resumenTexto.textContent = partes.join(" ");
+
+        statusDia.classList.remove("status-ok", "status-pending", "status-bad");
+        if (daily.turnos === 0) {
+          statusDia.textContent = "Sin datos";
+          statusDia.classList.add("status-bad");
+        } else {
+          const diaCompleto =
+            todasComidasDia &&
+            daily.medManiana && daily.medNoche &&
+            (daily.aguaVasos >= 6);
+
+          if (diaCompleto) {
+            statusDia.textContent = "Día completo";
+            statusDia.classList.add("status-ok");
+          } else {
+            statusDia.textContent = "Día incompleto";
+            statusDia.classList.add("status-pending");
+          }
+        }
       } catch (e) {
         console.error(e);
-        resumenTexto.textContent =
-          "No se pudo obtener el resumen diario (problema de conexión).";
+        resumenTexto.textContent = "No se pudo obtener el resumen diario (problema de conexión).";
+        statusDia.textContent = "";
+        statusDia.classList.remove("status-ok", "status-pending", "status-bad");
       }
     }
 
@@ -1207,140 +1449,479 @@
         const registros = await apiListar({ limite: 100 });
 
         if (!registros || registros.length === 0) {
-          historialLista.innerHTML =
-            "<div class='small-text'>Sin registros todavía.</div>";
+          historialLista.innerHTML = "<div class='small-text'>Sin registros todavía.</div>";
           return;
         }
 
-        const agrupados = new Map();
+        const porDia = new Map();
 
-        registros.forEach((rec) => {
-          const fechaStr =
-            typeof rec.fecha === "string" ? rec.fecha.slice(0, 10) : rec.fecha;
-          const key = `${fechaStr}|${rec.turno}|${rec.cuidador}`;
-          if (!agrupados.has(key)) {
-            agrupados.set(key, rec);
+        registros.forEach(rec => {
+          const fechaStr = typeof rec.fecha === "string" ? rec.fecha.slice(0, 10) : rec.fecha;
+          if (!porDia.has(fechaStr)) {
+            porDia.set(fechaStr, []);
           }
+          porDia.get(fechaStr).push(rec);
         });
 
-        const condensados = Array.from(agrupados.values());
+        const diasOrdenados = Array.from(porDia.entries()).sort((a, b) => {
+          return a[0] < b[0] ? 1 : -1;
+        });
+
         historialLista.innerHTML = "";
 
-        condensados.forEach((rec) => {
-          const fechaStr =
-            typeof rec.fecha === "string" ? rec.fecha.slice(0, 10) : rec.fecha;
-          const comidasCount =
-            (rec.desayuno ? 1 : 0) +
-            (rec.almuerzo ? 1 : 0) +
-            (rec.merienda ? 1 : 0) +
-            (rec.cena ? 1 : 0);
+        diasOrdenados.forEach(([fechaStr, recsDia]) => {
+          let resumenDia = {
+            desayuno: false,
+            almuerzo: false,
+            merienda: false,
+            cena: false,
+            medManiana: false,
+            medNoche: false,
+            aguaVasos: 0,
+            turnos: 0
+          };
 
-          const medCount =
-            (rec.med_maniana ? 1 : 0) + (rec.med_noche ? 1 : 0);
+          recsDia.forEach(r => {
+            resumenDia.turnos += 1;
+            if (r.desayuno)    resumenDia.desayuno = true;
+            if (r.almuerzo)    resumenDia.almuerzo = true;
+            if (r.merienda)    resumenDia.merienda = true;
+            if (r.cena)        resumenDia.cena = true;
+            if (r.med_maniana) resumenDia.medManiana = true;
+            if (r.med_noche)   resumenDia.medNoche = true;
+            const agua = r.agua_vasos || 0;
+            if (agua > resumenDia.aguaVasos) resumenDia.aguaVasos = agua;
+          });
 
-          const agua = rec.agua_vasos ?? 0;
-          const mood = moodEmoji(rec.estado_animo);
+          const todasComidasDia = resumenDia.desayuno && resumenDia.almuerzo &&
+                                  resumenDia.merienda && resumenDia.cena;
 
-          const item = document.createElement("div");
-          item.className = "history-item";
+          const estadoComidasDia = todasComidasDia
+            ? "Comidas completas"
+            : "Comidas incompletas";
 
-          const main = document.createElement("div");
-          main.className = "history-item-main";
+          let estadoMedDia;
+          if (resumenDia.medManiana && resumenDia.medNoche) {
+            estadoMedDia = "Medicación completa";
+          } else if (resumenDia.medManiana || resumenDia.medNoche) {
+            estadoMedDia = "Medicación incompleta";
+          } else {
+            estadoMedDia = "Sin medicación registrada";
+          }
 
-          const title = document.createElement("div");
-          title.className = "history-title";
-          title.textContent = `${formatFecha(fechaStr)} · ${labelTurno(
-            rec.turno
-          )}${mood ? " " + mood : ""}`;
+          const diaContainer = document.createElement("div");
+          diaContainer.className = "history-day";
 
-          const badge = document.createElement("div");
-          badge.className = "badge";
-          badge.textContent = labelCuidador(rec.cuidador);
+          const header = document.createElement("div");
+          header.className = "history-day-header";
+          header.textContent = formatFecha(fechaStr);
 
-          main.appendChild(title);
-          main.appendChild(badge);
+          const headerSummary = document.createElement("div");
+          headerSummary.className = "history-day-summary";
+          headerSummary.textContent =
+            `${estadoComidasDia} · ${estadoMedDia} · Agua: ${resumenDia.aguaVasos} vaso(s) · Turnos: ${resumenDia.turnos}`;
 
-          const meta = document.createElement("div");
-          meta.className = "history-meta";
-          meta.textContent = rec.notas
-            ? `Notas: ${rec.notas.slice(0, 200)}${
-                rec.notas.length > 200 ? "..." : ""
-              }`
-            : "Sin notas.";
+          header.appendChild(headerSummary);
+          diaContainer.appendChild(header);
 
-          const summary = document.createElement("div");
-          summary.className = "history-summary";
-          summary.textContent = `Comidas: ${comidasCount}/4 · Med: ${medCount}/2 · Agua: ${agua} vaso(s)`;
+          const itemsContainer = document.createElement("div");
+          itemsContainer.className = "history-day-items";
 
-          item.appendChild(main);
-          item.appendChild(summary);
-          item.appendChild(meta);
-
-          const deleteBtn = document.createElement("button");
-          deleteBtn.className = "delete-button";
-          deleteBtn.textContent = "Borrar";
-          deleteBtn.addEventListener("click", async (e) => {
-            e.stopPropagation();
-            const pin = window.prompt("Ingresá el PIN para borrar el turno:");
-            if (pin !== DELETE_PIN) return;
-            try {
-              await apiBorrar(rec.id);
-              await buildHistory();
-              await actualizarEstadosVisuales();
-            } catch (err) {
-              console.error(err);
-              alert("No se pudo borrar el registro.");
+          const agrupados = new Map();
+          recsDia.forEach(rec => {
+            const key = `${rec.turno}|${rec.cuidador}`;
+            if (!agrupados.has(key)) {
+              agrupados.set(key, rec);
             }
           });
-          item.appendChild(deleteBtn);
 
-          item.addEventListener("click", () => {
-            fechaInput.value = fechaStr || hoyISO();
-            turnoSelect.value = rec.turno || "maniana";
-            cuidadorSelect.value = rec.cuidador || "otro";
-            lastCuidadorValue = cuidadorSelect.value;
-            suggestInfo.textContent = "";
-            loadCurrentRecord();
-            window.scrollTo({ top: 0, behavior: "smooth" });
+          const turnosDia = Array.from(agrupados.values());
+          const ordenTurno = { maniana: 0, tarde: 1, noche: 2, completo: 3 };
+          turnosDia.sort((a, b) => {
+            const ta = ordenTurno[a.turno] ?? 99;
+            const tb = ordenTurno[b.turno] ?? 99;
+            return ta - tb;
           });
 
-          historialLista.appendChild(item);
+          turnosDia.forEach(rec => {
+            const comidasCount =
+              (rec.desayuno ? 1 : 0) +
+              (rec.almuerzo ? 1 : 0) +
+              (rec.merienda ? 1 : 0) +
+              (rec.cena ? 1 : 0);
+
+            const medCount =
+              (rec.med_maniana ? 1 : 0) +
+              (rec.med_noche ? 1 : 0);
+
+            const agua = rec.agua_vasos ?? 0;
+            const mood = moodEmoji(rec.estado_animo);
+            const hora = getHoraDesdeRec(rec);
+
+            const item = document.createElement("div");
+            item.className = "history-item";
+
+            const turnoVacio = comidasCount === 0 && medCount === 0;
+            const turnoIncompleto = !turnoVacio && (comidasCount < 4 || medCount < 2);
+
+            if (turnoVacio) {
+              item.classList.add("history-item-empty");
+            } else if (turnoIncompleto) {
+              item.classList.add("history-item-incomplete");
+            }
+
+            const main  = document.createElement("div");
+            main.className = "history-item-main";
+
+            const title = document.createElement("div");
+            title.className = "history-title";
+            title.textContent = `${labelTurno(rec.turno)}${mood ? " " + mood : ""}`;
+
+            const badge = document.createElement("div");
+            badge.className = "badge";
+            badge.textContent = hora
+              ? `${labelCuidador(rec.cuidador)} · ${hora}`
+              : labelCuidador(rec.cuidador);
+
+            main.appendChild(title);
+            main.appendChild(badge);
+
+            const meta = document.createElement("div");
+            meta.className = "history-meta";
+            meta.textContent = rec.notas
+              ? `Notas: ${rec.notas.slice(0, 60)}${rec.notas.length > 60 ? "..." : ""}`
+              : "Sin notas.";
+
+            const summary = document.createElement("div");
+            summary.className = "history-summary";
+            summary.textContent =
+              `Comidas: ${comidasCount}/4 · Med: ${medCount}/2 · Agua: ${agua} vaso(s)`;
+
+            item.appendChild(main);
+            item.appendChild(summary);
+
+            // 🔐 Botón borrar con PIN, sólo si NO es modo lectura
+            if (!READ_ONLY) {
+              const deleteBtn = document.createElement("button");
+              deleteBtn.className = "delete-button";
+              deleteBtn.textContent = "Borrar";
+              deleteBtn.addEventListener("click", async (e) => {
+                e.stopPropagation();
+                const pin = window.prompt("Ingresá el PIN para borrar este turno:");
+                if (pin === null) return;
+                if (pin !== DELETE_PIN) {
+                  alert("PIN incorrecto. No se borró el registro.");
+                  return;
+                }
+                try {
+                  await apiBorrar(rec.id);
+                  await buildHistory();
+                  await actualizarEstadosVisuales();
+                } catch (err) {
+                  console.error(err);
+                  alert("No se pudo borrar el registro.");
+                }
+              });
+              item.appendChild(deleteBtn);
+            }
+
+            item.appendChild(meta);
+
+            item.addEventListener("click", () => {
+              fechaInput.value     = fechaStr || hoyISO();
+              turnoSelect.value    = rec.turno || "maniana";
+              cuidadorSelect.value = rec.cuidador || "otro";
+              lastCuidadorValue    = cuidadorSelect.value;
+              lastTurnoValue       = turnoSelect.value;
+              suggestInfo.textContent = "";
+              loadCurrentRecord();
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            });
+
+            itemsContainer.appendChild(item);
+          });
+
+          diaContainer.appendChild(itemsContainer);
+          historialLista.appendChild(diaContainer);
         });
       } catch (e) {
         console.error(e);
-        historialLista.innerHTML =
-          "<div class='small-text'>No se pudo cargar el historial (problema de conexión).</div>";
+        historialLista.innerHTML = "<div class='small-text'>No se pudo cargar el historial (problema de conexión).</div>";
       }
+    }
+
+    function diasEntre(desdeStr, hastaStr) {
+      const dias = [];
+      const desde = new Date(desdeStr + "T00:00:00");
+      const hasta = new Date(hastaStr + "T00:00:00");
+      for (
+        let d = new Date(desde);
+        d <= hasta;
+        d.setDate(d.getDate() + 1)
+      ) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+        dias.push(`${y}-${m}-${dd}`);
+      }
+      return dias;
+    }
+
+    function calcularResumenDiaDesdeRegistros(registros) {
+      const resumen = {
+        desayuno: false,
+        almuerzo: false,
+        merienda: false,
+        cena: false,
+        medManiana: false,
+        medNoche: false,
+        aguaVasos: 0,
+        estados: {},
+      };
+
+      registros.forEach(rec => {
+        if (rec.desayuno)    resumen.desayuno = true;
+        if (rec.almuerzo)    resumen.almuerzo = true;
+        if (rec.merienda)    resumen.merienda = true;
+        if (rec.cena)        resumen.cena = true;
+        if (rec.med_maniana) resumen.medManiana = true;
+        if (rec.med_noche)   resumen.medNoche = true;
+
+        const agua = rec.agua_vasos || 0;
+        if (agua > resumen.aguaVasos) resumen.aguaVasos = agua;
+
+        const ea = rec.estado_animo || "";
+        if (ea) {
+          resumen.estados[ea] = (resumen.estados[ea] || 0) + 1;
+        }
+      });
+
+      let mood = "";
+      let maxCount = 0;
+      Object.entries(resumen.estados).forEach(([k, v]) => {
+        if (v > maxCount) {
+          maxCount = v;
+          mood = k;
+        }
+      });
+
+      return { ...resumen, mood };
+    }
+
+    async function cargarDashboard() {
+      const hoy = hoyISO();
+      const desde = dashDesdeInput.value || hoy;
+      const hasta = dashHastaInput.value || desde;
+
+      if (hasta < desde) {
+        alert("La fecha 'Hasta' no puede ser menor que 'Desde'.");
+        return;
+      }
+
+      dashIndicadores.textContent = "Cargando resumen...";
+      dashTabla.innerHTML = "";
+
+      const dias = diasEntre(desde, hasta);
+      const porDia = new Map();
+
+      for (const dia of dias) {
+        try {
+          const regs = await apiListar({ fecha: dia });
+          if (regs && regs.length > 0) {
+            porDia.set(dia, regs);
+          } else {
+            porDia.set(dia, []);
+          }
+        } catch (e) {
+          console.error("Error cargando día", dia, e);
+          porDia.set(dia, []);
+        }
+      }
+
+      const fechasOrdenadas = Array.from(porDia.keys()).sort();
+
+      if (fechasOrdenadas.length === 0) {
+        dashIndicadores.textContent = "No hay datos para el rango seleccionado.";
+        dashTabla.innerHTML = "";
+        return;
+      }
+
+      let diasConDatos = 0;
+      let diasCompletos = 0;
+      let sumaAgua = 0;
+      let diasConAgua = 0;
+      let diasMedCompleta = 0;
+
+      const filasTabla = [];
+
+      fechasOrdenadas.forEach(fechaStr => {
+        const regs = porDia.get(fechaStr) || [];
+        if (regs.length === 0) {
+          const fila = `
+            <tr>
+              <td>${formatFecha(fechaStr)}</td>
+              <td>0/4</td>
+              <td>0/2</td>
+              <td>0</td>
+              <td>-</td>
+            </tr>
+          `;
+          filasTabla.push(fila);
+          return;
+        }
+
+        diasConDatos++;
+
+        const resumen = calcularResumenDiaDesdeRegistros(regs);
+
+        const comidasCount = [
+          resumen.desayuno,
+          resumen.almuerzo,
+          resumen.merienda,
+          resumen.cena,
+        ].filter(Boolean).length;
+
+        const medCount = [
+          resumen.medManiana,
+          resumen.medNoche,
+        ].filter(Boolean).length;
+
+        const diaCompleto =
+          resumen.desayuno &&
+          resumen.almuerzo &&
+          resumen.merienda &&
+          resumen.cena &&
+          resumen.medManiana &&
+          resumen.medNoche &&
+          resumen.aguaVasos > 0;
+
+        if (diaCompleto) diasCompletos++;
+
+        const agua = resumen.aguaVasos || 0;
+        if (agua > 0) {
+          sumaAgua += agua;
+          diasConAgua++;
+        }
+
+        if (resumen.medManiana && resumen.medNoche) {
+          diasMedCompleta++;
+        }
+
+        const moodIcon = moodEmoji(resumen.mood);
+
+        const fila = `
+          <tr>
+            <td>${formatFecha(fechaStr)}</td>
+            <td>${comidasCount}/4</td>
+            <td>${medCount}/2</td>
+            <td>${agua}</td>
+            <td>${moodIcon || "-"}</td>
+          </tr>
+        `;
+        filasTabla.push(fila);
+      });
+
+      const totalDias = fechasOrdenadas.length;
+      const porcentajeCompletos =
+        totalDias > 0 ? ((diasCompletos / totalDias) * 100).toFixed(1) : "0.0";
+      const promedioAgua =
+        diasConAgua > 0 ? (sumaAgua / diasConAgua).toFixed(1) : "0.0";
+      const porcentajeMedCompleta =
+        diasConDatos > 0
+          ? ((diasMedCompleta / diasConDatos) * 100).toFixed(1)
+          : "0.0";
+
+      dashIndicadores.textContent =
+        `Días con datos: ${diasConDatos}/${totalDias}. ` +
+        `Días completos: ${diasCompletos} (${porcentajeCompletos}%). ` +
+        `Promedio de agua (solo días con registro de agua): ${promedioAgua} vaso(s). ` +
+        `Días con medicación completa: ${diasMedCompleta} (${porcentajeMedCompleta}%).`;
+
+      const tablaHTML = `
+        <table class="dash-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Comidas</th>
+              <th>Medicación</th>
+              <th>Agua</th>
+              <th>Ánimo</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filasTabla.join("")}
+          </tbody>
+        </table>
+      `;
+      dashTabla.innerHTML = tablaHTML;
     }
 
     function sugerirTurnoYCuidadorSegunAhora() {
       const hoy = hoyISO();
       fechaInput.value = hoy;
 
-      const { dow, minutes, now } = getNowInfo();
+      const { dow, minutes } = getNowInfo();
+
       const turnoGuess = guessTurnoFromMinutes(minutes);
       turnoSelect.value = turnoGuess;
+      lastTurnoValue = turnoGuess;
 
       const scheduled = getCaregiverFor(dow, minutes);
 
       if (scheduled) {
         cuidadorSelect.value = scheduled;
-        suggestInfo.textContent =
-          "Cuidadora sugerida automáticamente según calendario del turno.";
+        suggestInfo.textContent = "Cuidadora sugerida automáticamente según el horario actual del dispositivo.";
       } else {
-        suggestInfo.textContent =
-          "Fuera de un turno fijo: seleccionar cuidadora manualmente.";
+        suggestInfo.textContent = "Fuera de un turno fijo: seleccionar cuidadora manualmente.";
       }
 
       lastCuidadorValue = cuidadorSelect.value;
-
-      const hora = String(now.getHours()).padStart(2, "0");
-      const min = String(now.getMinutes()).padStart(2, "0");
-      turnoInfo.textContent = `Turno en curso estimado: ${labelTurno(
-        turnoGuess
-      )} · ${hora}:${min} hs`;
     }
 
+    function autoActualizarSegunReloj() {
+      const hoy = hoyISO();
+      const fechaSel = fechaInput.value || hoy;
+      if (fechaSel !== hoy) return;
+
+      const { dow, minutes } = getNowInfo();
+      const turnoGuess = guessTurnoFromMinutes(minutes);
+      const caregiverGuess = getCaregiverFor(dow, minutes);
+
+      let changed = false;
+
+      if (turnoSelect.value !== turnoGuess) {
+        turnoSelect.value = turnoGuess;
+        lastTurnoValue = turnoGuess;
+        changed = true;
+      }
+
+      if (caregiverGuess && cuidadorSelect.value !== caregiverGuess) {
+        cuidadorSelect.value = caregiverGuess;
+        lastCuidadorValue = caregiverGuess;
+        suggestInfo.textContent = "Turno y cuidadora actualizados automáticamente según la hora actual.";
+        changed = true;
+      }
+
+      if (changed) {
+        loadCurrentRecord();
+      }
+    }
+
+        // Inicializar lista de compras (se guarda en este dispositivo)
+      if (comprasChecks && comprasChecks.length) {
+        loadListaCompras();
+        comprasChecks.forEach(chk => {
+          chk.addEventListener("change", saveListaCompras);
+        });
+      }
+      if (comprasOtros) {
+        comprasOtros.addEventListener("input", () => {
+          saveListaCompras();
+        });
+      }
+
+    
+    // Aviso cuando cuidadora no coincide con calendario
     async function handleCuidadorChange() {
       const newValue = cuidadorSelect.value;
       const fechaSel = fechaInput.value || hoyISO();
@@ -1348,13 +1929,14 @@
 
       const scheduled = getScheduledCuidadorForFechaTurno(fechaSel, turnoSel);
 
-      if (scheduled && newValue !== "otro" && newValue !== scheduled) {
+      if (scheduled && newValue !== scheduled) {
         const nombreProgramado = labelCuidador(scheduled);
-        const nombreNuevo = labelCuidador(newValue);
+        const nombreNuevo      = labelCuidador(newValue);
+
         const ok = window.confirm(
-          `${nombreNuevo} no está programada para este turno.\n` +
-            `Según el calendario debería estar ${nombreProgramado}.\n\n` +
-            `¿Confirmás que ${nombreNuevo} está cubriendo el turno?`
+          `${nombreNuevo} no está asignada en el calendario para este turno.\n` +
+          `Según el cronograma, debería estar ${nombreProgramado}.\n\n` +
+          `¿Confirmás que ${nombreNuevo} está cubriendo este turno en reemplazo?`
         );
         if (!ok) {
           cuidadorSelect.value = lastCuidadorValue;
@@ -1367,173 +1949,152 @@
       await loadCurrentRecord();
     }
 
-    function activarTabTurno() {
-      tabTurno.classList.add("active");
-      tabLista.classList.remove("active");
-      panelTurno.style.display = "";
-      panelLista.style.display = "none";
-    }
+    // Aviso al cambiar turno si cuidadora no coincide
+    async function handleTurnoChange() {
+      const fechaSel = fechaInput.value || hoyISO();
+      const turnoSel = turnoSelect.value;
+      const scheduled = getScheduledCuidadorForFechaTurno(fechaSel, turnoSel);
+      const cuidadorActual = cuidadorSelect.value;
 
-    function activarTabLista() {
-      tabLista.classList.add("active");
-      tabTurno.classList.remove("active");
-      panelTurno.style.display = "none";
-      panelLista.style.display = "";
-    }
+      if (scheduled && cuidadorActual !== scheduled) {
+        const nombreProgramado = labelCuidador(scheduled);
+        const nombreActual     = labelCuidador(cuidadorActual);
 
-    function renderListaCompras() {
-      if (!listaPendientes) return;
-      if (!listaComprasData || listaComprasData.length === 0) {
-        listaPendientes.innerHTML = "<div>No hay pendientes por ahora.</div>";
-        return;
+        const ok = window.confirm(
+          `${nombreActual} no está asignada en el calendario para este turno.\n` +
+          `Según el cronograma, debería estar ${nombreProgramado}.\n\n` +
+          `¿Confirmás que ${nombreActual} está cubriendo un turno distinto al asignado?`
+        );
+
+        if (!ok) {
+          turnoSelect.value = lastTurnoValue;
+          return;
+        }
       }
 
-      listaPendientes.innerHTML = "";
-      const cont = document.createElement("div");
+      lastTurnoValue = turnoSel;
 
-      listaComprasData.forEach((item) => {
-        if (item.estado === "comprado") return;
-
-        const row = document.createElement("div");
-        row.className = "lista-item";
-
-        const main = document.createElement("div");
-        main.className = "lista-item-main";
-        main.innerHTML = `<span class="lista-cat">${labelCategoria(
-          item.categoria
-        )}</span>: ${item.cantidad} ${item.item}`;
-
-        const acc = document.createElement("div");
-        acc.className = "lista-accion";
-        const btn = document.createElement("button");
-        btn.className = "lista-btn-small";
-        btn.textContent = "✅ Comprado";
-        btn.addEventListener("click", async () => {
-          try {
-            await apiComprasMarcarComprado(item.id);
-            await cargarListaCompras();
-          } catch (e) {
-            console.error(e);
-            alert("No se pudo actualizar la lista.");
-          }
-        });
-        acc.appendChild(btn);
-
-        row.appendChild(main);
-        row.appendChild(acc);
-        cont.appendChild(row);
-      });
-
-      listaPendientes.appendChild(cont);
-    }
-
-    async function cargarListaCompras() {
-      try {
-        const data = await apiComprasListar();
-        listaComprasData = Array.isArray(data) ? data : [];
-        renderListaCompras();
-      } catch (e) {
-        console.error(e);
-        listaPendientes.innerHTML =
-          "<div>No se pudo cargar la lista (problema de conexión).</div>";
+      if (scheduled) {
+        suggestInfo.textContent = "Turno y cuidadora verificados según el calendario.";
+      } else {
+        suggestInfo.textContent = "Turno fuera del calendario fijo. Verificá que la persona esté cubriendo este horario.";
       }
+
+      await loadCurrentRecord();
     }
 
     async function init() {
-      currentDateLabel.textContent = "Hoy: " + formatHoyHumano();
+      const hoyStr = hoyISO();
+      fechaInput.max = hoyStr;
+
+      currentDateLabel.textContent = "Hoy: " + formatFecha(hoyStr);
+
+      // Mostrar/ocultar tarjetas de "modo familia"
+      if (READ_ONLY) {
+        if (cardResumenPeriodo) cardResumenPeriodo.style.display = "";
+        if (cardExportar)       cardExportar.style.display = "";
+      } else {
+        if (cardResumenPeriodo) cardResumenPeriodo.style.display = "none";
+        if (cardExportar)       cardExportar.style.display = "none";
+      }
+
+      // Banner de modo lectura
+      if (READ_ONLY) {
+        const subtitle = document.querySelector(".subtitle");
+        const banner = document.createElement("div");
+        banner.className = "small-text";
+        banner.style.textAlign = "center";
+        banner.style.marginBottom = "10px";
+        banner.textContent = "🔒 Modo lectura (familia): sólo consulta. No se pueden modificar ni borrar registros desde este enlace.";
+        subtitle.insertAdjacentElement("afterend", banner);
+
+        [
+          desayunoInput,
+          almuerzoInput,
+          meriendaInput,
+          cenaInput,
+          aguaInput,
+          medManianaInput,
+          medNocheInput,
+          notasInput
+        ].forEach(el => el.disabled = true);
+
+        resetDiaBtn.style.display = "none";
+      }
 
       sugerirTurnoYCuidadorSegunAhora();
       await loadCurrentRecord();
       await buildHistory();
-      await cargarListaCompras();
 
       fechaInput.addEventListener("change", () => {
+        const valor = fechaInput.value;
+        const hoy = hoyISO();
+        if (!READ_ONLY && valor && valor > hoy) {
+          alert("No se pueden registrar turnos en fechas futuras. Se usará la fecha de hoy.");
+          fechaInput.value = hoy;
+        }
+        const actual = fechaInput.value || hoy;
         suggestInfo.textContent = "";
+        currentDateLabel.textContent =
+          actual && actual <= hoy ? "Día seleccionado: " + formatFecha(actual)
+                                  : "Hoy: " + formatFecha(hoy);
         loadCurrentRecord();
       });
 
       turnoSelect.addEventListener("change", () => {
-        loadCurrentRecord();
+        handleTurnoChange();
       });
 
       cuidadorSelect.addEventListener("change", () => {
         handleCuidadorChange();
       });
 
-      [
-        desayunoInput,
-        almuerzoInput,
-        meriendaInput,
-        cenaInput,
-        medManianaInput,
-        medNocheInput,
-      ].forEach((el) =>
-        el.addEventListener("change", () => {
-          saveCurrentRecord();
-        })
-      );
+      if (!READ_ONLY) {
+        [
+          desayunoInput,
+          almuerzoInput,
+          meriendaInput,
+          cenaInput,
+          medManianaInput,
+          medNocheInput
+        ].forEach(el => el.addEventListener("change", () => { saveCurrentRecord(); }));
 
-      aguaInput.addEventListener("input", () => {
-        saveCurrentRecord();
-      });
-      notasInput.addEventListener("input", () => {
-        saveCurrentRecord();
-      });
+        aguaInput.addEventListener("input", () => { saveCurrentRecord(); });
+        notasInput.addEventListener("input", () => { saveCurrentRecord(); });
 
-      moodOptions.forEach((opt) => {
-        const radio = opt.querySelector('input[name="estadoAnimo"]');
-        opt.addEventListener("click", () => {
-          setMoodUI(radio.value);
-          saveCurrentRecord();
+        moodOptions.forEach(opt => {
+          const radio = opt.querySelector('input[name="estadoAnimo"]');
+          opt.addEventListener("click", () => {
+            setMoodUI(radio.value);
+            saveCurrentRecord();
+          });
         });
-      });
 
-      resetDiaBtn.addEventListener("click", () => {
-        if (!window.confirm("¿Seguro que querés borrar este turno completo?")) {
-          return;
-        }
-        resetCurrentRecord();
-      });
+        resetDiaBtn.addEventListener("click", () => { resetCurrentRecord(); });
 
-      exportDiaBtn.addEventListener("click", () => {
-        const fecha = fechaInput.value || hoyISO();
-        const url = `${API_BASE}/exportar-csv?fecha=${encodeURIComponent(
-          fecha
-        )}`;
-        window.open(url, "_blank");
-      });
-
-      btnTurnoAhora.addEventListener("click", () => {
-        sugerirTurnoYCuidadorSegunAhora();
-        loadCurrentRecord();
-      });
-
-      if (tabTurno && tabLista) {
-        tabTurno.addEventListener("click", activarTabTurno);
-        tabLista.addEventListener("click", activarTabLista);
-        activarTabTurno();
+        setInterval(() => {
+          autoActualizarSegunReloj();
+        }, 60000);
+      } else {
+        moodOptions.forEach(opt => {
+          opt.addEventListener("click", () => {});
+        });
       }
 
-      if (listaAgregarBtn) {
-        listaAgregarBtn.addEventListener("click", async () => {
-          const categoria = listaCategoria.value || "otro";
-          const item = (listaItem.value || "").trim();
-          const cantidad = (listaCantidad.value || "").trim() || "1";
+      if (exportDiaBtn) {
+        exportDiaBtn.addEventListener("click", () => {
+          const fecha = fechaInput.value || hoyISO();
+          exportarCsvDia(fecha);
+        });
+      }
 
-          if (!item) {
-            alert("Escribí qué hay que comprar.");
-            return;
-          }
+      if (dashDesdeInput && dashHastaInput && dashActualizarBtn) {
+        const hoy = hoyISO();
+        dashDesdeInput.value = hoy;
+        dashHastaInput.value = hoy;
 
-          try {
-            await apiComprasAgregar({ categoria, item, cantidad });
-            listaItem.value = "";
-            listaCantidad.value = "";
-            await cargarListaCompras();
-          } catch (e) {
-            console.error(e);
-            alert("No se pudo guardar en la lista.");
-          }
+        dashActualizarBtn.addEventListener("click", () => {
+          cargarDashboard();
         });
       }
     }
