@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>TERESITAAP</title>
+  <title>TERESITAPP</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Favicon emoji 👵🏻 -->
@@ -607,22 +607,9 @@
       <button class="reset-btn" id="resetDia">Borrar registro de este turno</button>
     </div>
 
-    <!-- Dashboard familia -->
-    <div class="card" id="familiaDashboardCard" style="display:none;">
+    <!-- Dashboard / resumen del día -->
+    <div class="card">
       <h2>📊 Dashboard del día</h2>
-      <div id="familiaDashboardTexto" class="small-text"></div>
-    </div>
-
-    <!-- Estado general día -->
-    <div class="card">
-      <h2>Resumen rápido del día</h2>
-      <div id="resumenTexto" class="small-text"></div>
-    </div>
-
-
-    <!-- Estado general día -->
-    <div class="card">
-      <h2>Resumen rápido del día</h2>
       <div id="resumenTexto" class="small-text"></div>
     </div>
 
@@ -751,7 +738,7 @@
       return await res.json();
     }
 
-    // --- API lista compras (si ya tenés backend armado) ---
+    // --- API lista compras ---
     async function apiComprasListar() {
       const url = new URL(API_BASE + "/compras-listar", window.location.origin);
       const res = await fetch(url.toString());
@@ -797,8 +784,6 @@
     const statusComidas    = document.getElementById("statusComidas");
     const statusMed        = document.getElementById("statusMed");
     const resumenTexto     = document.getElementById("resumenTexto");
-    const familiaDashboardCard  = document.getElementById("familiaDashboardCard");
-    const familiaDashboardTexto = document.getElementById("familiaDashboardTexto");
     const savedMessage     = document.getElementById("savedMessage");
     const resetDiaBtn      = document.getElementById("resetDia");
     const historialLista   = document.getElementById("historialLista");
@@ -1220,14 +1205,8 @@
           partes.push("📋 Aún no hay turnos registrados para este día.");
         }
 
-    const textoResumen = partes.join(" ");
+        const textoResumen = partes.join(" ");
         resumenTexto.textContent = textoResumen;
-
-        // Reflejar en dashboard familia
-        if (isFamiliaView && familiaDashboardTexto && familiaDashboardCard) {
-          familiaDashboardTexto.textContent = textoResumen;
-        }
-
       } catch (e) {
         console.error(e);
         resumenTexto.textContent = "No se pudo obtener el resumen diario (problema de conexión).";
@@ -1498,7 +1477,7 @@
       btnLimpiarComprados.addEventListener("click", () => {
         const pin = window.prompt("Ingresá el PIN para limpiar la lista de comprados:");
         if (pin !== DELETE_PIN) return;
-        // limpieza lógica light: sólo borramos de la vista local (no tocamos DB)
+        // limpieza lógica local
         listaComprasData = listaComprasData.filter(it => it.estado !== "comprado");
         renderListaCompras();
       });
@@ -1509,7 +1488,7 @@
 
       if (familiaBanner) familiaBanner.style.display = "block";
 
-      // Fecha queda editable para navegar días
+      // Fecha editable para navegar; turno/cuidador bloqueados
       turnoSelect.disabled    = true;
       cuidadorSelect.disabled = true;
 
@@ -1540,11 +1519,6 @@
       if (resetDiaBtn)   resetDiaBtn.style.display = "none";
       if (btnTurnoAhora) btnTurnoAhora.style.display = "none";
       if (listaAgregarBtn) listaAgregarBtn.style.display = "none";
-
-    // Dashboard visible en familia
-      if (familiaDashboardCard) {
-        familiaDashboardCard.style.display = "block";
-      }
 
       // Export visible en familia
       if (exportCard)   exportCard.style.display = "block";
@@ -1628,35 +1602,12 @@
         activarTabTurno();
       }
 
-      if (listaAgregarBtn) {
-        listaAgregarBtn.addEventListener("click", async () => {
-          const categoria = listaCategoria.value || "otro";
-          const item      = (listaItem.value || "").trim();
-          const cantidad  = (listaCantidad.value || "").trim() || "1";
-
-          if (!item) {
-            alert("Escribí qué hay que comprar.");
-            return;
-          }
-
-          try {
-            await apiComprasAgregar({ categoria, item, cantidad });
-            listaItem.value     = "";
-            listaCantidad.value = "";
-            await cargarListaCompras();
-          } catch (e) {
-            console.error(e);
-            alert("No se pudo guardar en la lista.");
-          }
-        });
-      }
-
       setupLimpiarComprados();
       aplicarModoFamilia();
+      await actualizarEstadosVisuales();
     }
 
     document.addEventListener("DOMContentLoaded", init);
   </script>
 </body>
 </html>
-
