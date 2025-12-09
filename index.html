@@ -799,6 +799,11 @@
     const suggestInfo = document.getElementById("suggestInfo");
     const turnoInfo = document.getElementById("turnoInfo");
     const exportDiaBtn = document.getElementById("exportDia");
+          // El botón de exportar sólo se usa en modo familia
+      if (!isFamiliaView && exportDiaBtn) {
+        exportDiaBtn.style.display = "none";
+      }
+
     const btnTurnoAhora = document.getElementById("btnTurnoAhora");
 
     const moodOptions = document.querySelectorAll(".mood-option");
@@ -1559,6 +1564,10 @@
 
       if (familiaBanner) familiaBanner.style.display = "block";
 
+      if (exportDiaBtn) {
+      exportDiaBtn.style.display = "block";
+    }
+
       // Permitir cambiar fecha, pero bloquear el resto de la edición del turno
       turnoSelect.disabled = true;
       cuidadorSelect.disabled = true;
@@ -1706,4 +1715,5 @@
   </script>
 </body>
 </html>
+
 
