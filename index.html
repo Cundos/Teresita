@@ -607,6 +607,19 @@
       <button class="reset-btn" id="resetDia">Borrar registro de este turno</button>
     </div>
 
+    <!-- Dashboard familia -->
+    <div class="card" id="familiaDashboardCard" style="display:none;">
+      <h2>📊 Dashboard del día</h2>
+      <div id="familiaDashboardTexto" class="small-text"></div>
+    </div>
+
+    <!-- Estado general día -->
+    <div class="card">
+      <h2>Resumen rápido del día</h2>
+      <div id="resumenTexto" class="small-text"></div>
+    </div>
+
+
     <!-- Estado general día -->
     <div class="card">
       <h2>Resumen rápido del día</h2>
@@ -784,6 +797,8 @@
     const statusComidas    = document.getElementById("statusComidas");
     const statusMed        = document.getElementById("statusMed");
     const resumenTexto     = document.getElementById("resumenTexto");
+    const familiaDashboardCard  = document.getElementById("familiaDashboardCard");
+    const familiaDashboardTexto = document.getElementById("familiaDashboardTexto");
     const savedMessage     = document.getElementById("savedMessage");
     const resetDiaBtn      = document.getElementById("resetDia");
     const historialLista   = document.getElementById("historialLista");
@@ -1205,7 +1220,14 @@
           partes.push("📋 Aún no hay turnos registrados para este día.");
         }
 
-        resumenTexto.textContent = partes.join(" ");
+    const textoResumen = partes.join(" ");
+        resumenTexto.textContent = textoResumen;
+
+        // Reflejar en dashboard familia
+        if (isFamiliaView && familiaDashboardTexto && familiaDashboardCard) {
+          familiaDashboardTexto.textContent = textoResumen;
+        }
+
       } catch (e) {
         console.error(e);
         resumenTexto.textContent = "No se pudo obtener el resumen diario (problema de conexión).";
@@ -1519,6 +1541,11 @@
       if (btnTurnoAhora) btnTurnoAhora.style.display = "none";
       if (listaAgregarBtn) listaAgregarBtn.style.display = "none";
 
+    // Dashboard visible en familia
+      if (familiaDashboardCard) {
+        familiaDashboardCard.style.display = "block";
+      }
+
       // Export visible en familia
       if (exportCard)   exportCard.style.display = "block";
       if (exportDiaBtn) exportDiaBtn.style.display = "block";
@@ -1632,3 +1659,4 @@
   </script>
 </body>
 </html>
+
