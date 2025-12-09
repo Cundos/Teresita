@@ -1525,15 +1525,27 @@
       if (exportDiaBtn) exportDiaBtn.style.display = "block";
     }
 
-    async function init() {
-      currentDateLabel.textContent = "Hoy: " + formatHoyHumano();
+      async function init() {
+        const hoy = hoyISO();
+        currentDateLabel.textContent = "Hoy: " + formatHoyHumano();
+      
+        // 👉 No permitir fechas futuras
+        if (fechaInput) {
+          fechaInput.max = hoy;
+        }
+      
+        sugerirTurnoYCuidadorSegunAhora();
+        await loadCurrentRecord();
 
-      sugerirTurnoYCuidadorSegunAhora();
-      await loadCurrentRecord();
       await buildHistory();
       await cargarListaCompras();
 
-      fechaInput.addEventListener("change", () => {
+       fechaInput.addEventListener("change", () => {
+        const hoy = hoyISO();
+        if (fechaInput.value && fechaInput.value > hoy) {
+          alert("No se pueden cargar datos en fechas futuras. Se volvió a la fecha de hoy.");
+          fechaInput.value = hoy;
+        }
         suggestInfo.textContent = "";
         loadCurrentRecord();
       });
@@ -1611,3 +1623,4 @@
   </script>
 </body>
 </html>
+
