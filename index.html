@@ -5,6 +5,7 @@
   <title>TERESITAPP</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <!-- Favicon emoji 👵🏻 -->
   <link
     rel="icon"
     type="image/svg+xml"
@@ -136,19 +137,6 @@
       background: #ffe7c7;
       color: #8a4b00;
     }
-    
-    .status-danger {
-      background: #ffe5e5;
-      color: #a00000;
-    }
-
-    /* NUEVO: Contenedor para pills del Dashboard */
-    .dashboard-grid {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap; 
-        margin-bottom: 8px;
-    }
 
     .small-text {
       font-size: 0.8rem;
@@ -267,7 +255,6 @@
       padding: 2px 6px;
       border-radius: 999px;
       background: #eee;
-      white-space: nowrap;
     }
 
     .delete-button {
@@ -434,6 +421,7 @@
     </div>
     <div class="today-label" id="currentDateLabel"></div>
 
+    <!-- Datos del turno + pestaña Lista -->
     <div class="card">
       <h2>
         <span>📅 Datos del turno</span>
@@ -443,6 +431,7 @@
         </div>
       </h2>
 
+      <!-- Panel Turno -->
       <div id="panelTurno">
         <div class="two-cols">
           <div class="row">
@@ -478,6 +467,7 @@
         </button>
       </div>
 
+      <!-- Panel Lista de compras -->
       <div id="panelLista" style="display:none; margin-top:4px;">
         <div class="small-text" style="margin-bottom:6px;">
           Usá esta pestaña para ir anotando lo que falte comprar. Se guarda en la base y se ve igual desde cualquier dispositivo.
@@ -507,14 +497,10 @@
 
         <div class="small-text" style="margin-top:8px;">Pendientes:</div>
         <div id="listaPendientes" class="small-text" style="margin-top:4px;"></div>
-        
-        <div class="small-text" style="margin-top:12px;">Comprados recientemente:</div>
-        <div id="listaComprados" class="small-text" style="margin-top:4px;"></div>
-        
-        <button type="button" class="reset-btn" id="listaLimpiarComprados">🧹 Limpiar</button>
       </div>
     </div>
 
+    <!-- Comidas -->
     <div class="card">
       <h2>
         <span>🍳 Comidas del día</span>
@@ -541,6 +527,7 @@
       <div class="small-text">Tildar en el turno en el que se realiza cada comida.</div>
     </div>
 
+    <!-- Agua -->
     <div class="card">
       <h2>💧 Agua (por turno)</h2>
       <div class="row">
@@ -550,6 +537,7 @@
       <div class="small-text">Actualizar a lo largo del día. Se consolida entre turnos.</div>
     </div>
 
+    <!-- Medicación -->
     <div class="card">
       <h2>
         <span>💊 Medicación del día</span>
@@ -570,6 +558,7 @@
       </div>
     </div>
 
+    <!-- Estado de ánimo -->
     <div class="card">
       <h2>Estado de ánimo (turno)</h2>
       <div class="mood-group">
@@ -592,6 +581,7 @@
       <div class="small-text">Elegir el estado de ánimo predominante en este turno.</div>
     </div>
 
+    <!-- Notas -->
     <div class="card">
       <h2>📝 Notas del turno</h2>
       <div class="row">
@@ -601,11 +591,13 @@
       <button class="reset-btn" id="resetDia">Borrar registro de este turno</button>
     </div>
 
+    <!-- Estado general día -->
     <div class="card">
       <h2>Resumen rápido del día</h2>
-      <div id="resumenTexto" class="dashboard-grid"></div> 
+      <div id="resumenTexto" class="small-text"></div>
     </div>
 
+    <!-- Historial -->
     <div class="card">
       <h2>Historial reciente</h2>
       <div class="small-text">
@@ -616,6 +608,7 @@
       <div id="historialLista" class="history-list"></div>
     </div>
 
+    <!-- Calendario de turnos -->
     <div class="card">
       <h2>🗓️ Calendario de turnos</h2>
       <div class="small-text">Referencia según el cronograma acordado.</div>
@@ -678,6 +671,7 @@
       </table>
     </div>
 
+    <!-- Exportar -->
     <div class="card">
       <h2>Exportar registros</h2>
       <button class="export-btn" id="exportDia">⬇️ Exportar día a Excel / Sheets</button>
@@ -692,17 +686,6 @@
   <script>
     const API_BASE = "/api";
     const DELETE_PIN = "1905";
-
-    // --- NUEVA FUNCIÓN DEBOUCE PARA OPTIMIZACIÓN ---
-    function debounce(func, delay) {
-        let timeout;
-        return function(...args) {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => func.apply(this, args), delay);
-        };
-    }
-    // ----------------------------------------------
-
 
     async function apiGuardar(record) {
       const res = await fetch(API_BASE + "/guardar-registro", {
@@ -743,8 +726,7 @@
       const url = new URL(API_BASE + "/compras-listar", window.location.origin);
       const res = await fetch(url.toString());
       if (!res.ok) throw new Error("Error al listar compras");
-      return await res.json();
-      // se espera array de items
+      return await res.json(); // se espera array de items
     }
 
     async function apiComprasAgregar(item) {
@@ -767,19 +749,6 @@
       return await res.json();
     }
 
-    // --- NUEVA API PARA LIMPIEZA DE COMPRAS ---
-    // NOTA: Esta ruta debe ser implementada en tu backend Vercel/Neon
-    async function apiComprasLimpiarComprados() {
-      const res = await fetch(API_BASE + "/compras-limpiar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!res.ok) throw new Error("Error al limpiar lista");
-      return await res.json();
-    }
-    // -------------------------------------------
-
-
     /* DOM refs */
     const currentDateLabel = document.getElementById("currentDateLabel");
 
@@ -795,9 +764,10 @@
     const medManianaInput = document.getElementById("medManiana");
     const medNocheInput = document.getElementById("medNoche");
     const notasInput = document.getElementById("notas");
+
     const statusComidas = document.getElementById("statusComidas");
     const statusMed = document.getElementById("statusMed");
-    const resumenTexto = document.getElementById("resumenTexto"); // Ahora es el dashboard-grid
+    const resumenTexto = document.getElementById("resumenTexto");
     const savedMessage = document.getElementById("savedMessage");
     const resetDiaBtn = document.getElementById("resetDia");
     const historialLista = document.getElementById("historialLista");
@@ -805,6 +775,7 @@
     const turnoInfo = document.getElementById("turnoInfo");
     const exportDiaBtn = document.getElementById("exportDia");
     const btnTurnoAhora = document.getElementById("btnTurnoAhora");
+
     const moodOptions = document.querySelectorAll(".mood-option");
     const moodRadios = document.querySelectorAll('input[name="estadoAnimo"]');
 
@@ -818,49 +789,47 @@
     const listaCantidad = document.getElementById("listaCantidad");
     const listaAgregarBtn = document.getElementById("listaAgregar");
     const listaPendientes = document.getElementById("listaPendientes");
-    // --- NUEVOS REFS PARA LISTA DE COMPRAS ---
-    const listaComprados = document.getElementById("listaComprados");
-    const listaLimpiarBtn = document.getElementById("listaLimpiarComprados");
-    // ------------------------------------------
 
     let saveTimeout = null;
     let lastCuidadorValue = cuidadorSelect.value;
     let listaComprasData = [];
+
     const schedule = {
       1: [
-        { from: 0, to: 8 * 60, cuidador: "rocio", horario: "20:00 - 08:00" },
-        { from: 12 * 60, to: 18 * 60, cuidador: "guadalupe", horario: "12:00 - 18:00" },
-        { from: 20 * 60, to: 24 * 60, cuidador: "noelia", horario: "20:00 - 08:00" },
+        { from: 0, to: 8 * 60, cuidador: "rocio" },
+        { from: 12 * 60, to: 18 * 60, cuidador: "guadalupe" },
+        { from: 20 * 60, to: 24 * 60, cuidador: "noelia" },
       ],
       2: [
-        { from: 0, to: 8 * 60, cuidador: "noelia", horario: "20:00 - 08:00" },
-        { from: 12 * 60, to: 16 * 60, cuidador: "aylen", horario: "12:00 - 16:00" },
-        { from: 21 * 60, to: 24 * 60, cuidador: "guadalupe", horario: "21:00 - 12:00" },
+        { from: 0, to: 8 * 60, cuidador: "noelia" },
+        { from: 12 * 60, to: 16 * 60, cuidador: "aylen" },
+        { from: 21 * 60, to: 24 * 60, cuidador: "guadalupe" },
       ],
       3: [
-        { from: 0, to: 12 * 60, cuidador: "guadalupe", horario: "21:00 - 12:00" },
-        { from: 12 * 60, to: 18 * 60, cuidador: "guadalupe", horario: "12:00 - 18:00" },
-        { from: 20 * 60, to: 24 * 60, cuidador: "noelia", horario: "20:00 - 08:00" },
+        { from: 0, to: 12 * 60, cuidador: "guadalupe" },
+        { from: 12 * 60, to: 18 * 60, cuidador: "guadalupe" },
+        { from: 20 * 60, to: 24 * 60, cuidador: "noelia" },
       ],
       4: [
-        { from: 0, to: 8 * 60, cuidador: "noelia", horario: "20:00 - 08:00" },
-        { from: 12 * 60, to: 16 * 60, cuidador: "aylen", horario: "12:00 - 16:00" },
-        { from: 20 * 60, to: 24 * 60, cuidador: "noelia", horario: "20:00 - 08:00" },
+        { from: 0, to: 8 * 60, cuidador: "noelia" },
+        { from: 12 * 60, to: 16 * 60, cuidador: "aylen" },
+        { from: 20 * 60, to: 24 * 60, cuidador: "noelia" },
       ],
       5: [
-        { from: 0, to: 8 * 60, cuidador: "noelia", horario: "20:00 - 08:00" },
-        { from: 9 * 60, to: 18 * 60, cuidador: "guadalupe", horario: "09:00 - 18:00" },
-        { from: 20 * 60, to: 24 * 60, cuidador: "noelia", horario: "20:00 - 08:00" },
+        { from: 0, to: 8 * 60, cuidador: "noelia" },
+        { from: 9 * 60, to: 18 * 60, cuidador: "guadalupe" },
+        { from: 20 * 60, to: 24 * 60, cuidador: "noelia" },
       ],
       6: [
-        { from: 0, to: 8 * 60, cuidador: "noelia", horario: "20:00 - 08:00" },
-        { from: 20 * 60, to: 24 * 60, cuidador: "rocio", horario: "20:00 - 08:00" },
+        { from: 0, to: 8 * 60, cuidador: "noelia" },
+        { from: 20 * 60, to: 24 * 60, cuidador: "rocio" },
       ],
       0: [
-        { from: 0, to: 8 * 60, cuidador: "rocio", horario: "19:00 - 08:00" },
-        { from: 19 * 60, to: 24 * 60, cuidador: "rocio", horario: "19:00 - 08:00" },
+        { from: 0, to: 8 * 60, cuidador: "rocio" },
+        { from: 19 * 60, to: 24 * 60, cuidador: "rocio" },
       ],
     };
+
     function hoyISO() {
       const hoy = new Date();
       const y = hoy.getFullYear();
@@ -912,32 +881,6 @@
       }
       return getCaregiverFor(dow, minutes);
     }
-
-    // --- FUNCIÓN MEJORADA: Obtiene el horario de un turno/día específico ---
-    function getTurnoHorario(fechaStr, turno) {
-        const base = fechaStr || hoyISO();
-        const fecha = new Date(base + "T12:00:00");
-        const dow = fecha.getDay();
-        const daySched = schedule[dow] || [];
-        
-        let targetMinutes;
-        switch (turno) {
-            case "maniana": targetMinutes = 9 * 60; break;
-            case "tarde": targetMinutes = 15 * 60; break;
-            case "noche": targetMinutes = 22 * 60; break;
-            default: targetMinutes = 12 * 60; // Completo
-        }
-        
-        for (const slot of daySched) {
-            // Buscamos un slot que contenga la hora representativa del turno
-            if (targetMinutes >= slot.from && targetMinutes < slot.to) {
-                return slot.horario;
-            }
-        }
-        return null;
-    }
-    // ------------------------------------------------------------------------
-
 
     function guessTurnoFromMinutes(minutes) {
       if (minutes >= 6 * 60 && minutes < 12 * 60) return "maniana";
@@ -1043,6 +986,7 @@
       if (!rows || rows.length === 0) return null;
 
       const r = rows[0];
+
       return {
         fecha,
         turno,
@@ -1061,6 +1005,7 @@
 
     async function getDailySummary(fechaStr) {
       const registros = await apiListar({ fecha: fechaStr });
+
       const result = {
         desayuno: false,
         almuerzo: false,
@@ -1070,8 +1015,8 @@
         medNoche: false,
         aguaVasos: 0,
         turnos: 0,
-        animoCounts: { bien: 0, neutral: 0, mal: 0 }
       };
+
       registros.forEach((rec) => {
         result.turnos += 1;
         if (rec.desayuno) result.desayuno = true;
@@ -1082,11 +1027,6 @@
         if (rec.med_noche) result.medNoche = true;
         const agua = rec.agua_vasos || 0;
         if (agua > result.aguaVasos) result.aguaVasos = agua;
-        
-        // Contar estados de ánimo
-        if (rec.estado_animo in result.animoCounts) {
-            result.animoCounts[rec.estado_animo]++;
-        }
       });
 
       return result;
@@ -1107,6 +1047,7 @@
         notas: notasInput.value || "",
         estadoAnimo: getSelectedMood(),
       };
+
       try {
         await apiGuardar(record);
         mostrarGuardado();
@@ -1162,9 +1103,7 @@
       await saveCurrentRecord();
     }
 
-    // --- FUNCIÓN MEJORADA: Dashboard Visual ---
     async function actualizarEstadosVisuales() {
-      // 1. Estados del turno actual
       const anyMeal =
         desayunoInput.checked ||
         almuerzoInput.checked ||
@@ -1175,109 +1114,106 @@
         almuerzoInput.checked &&
         meriendaInput.checked &&
         cenaInput.checked;
+
       if (allMeals) {
-        statusComidas.textContent = "Completas (turno)";
-        statusComidas.className = "status-pill status-ok";
+        statusComidas.textContent = "Comidas completas (turno)";
+        statusComidas.classList.add("status-ok");
+        statusComidas.classList.remove("status-pending");
       } else if (anyMeal) {
-        statusComidas.textContent = "Incompletas (turno)";
-        statusComidas.className = "status-pill status-pending";
+        statusComidas.textContent = "Comidas incompletas (turno)";
+        statusComidas.classList.add("status-pending");
+        statusComidas.classList.remove("status-ok");
       } else {
-        statusComidas.textContent = "Sin registrar (turno)";
-        statusComidas.className = "status-pill status-danger";
+        statusComidas.textContent = "Sin comidas registradas en este turno";
+        statusComidas.classList.add("status-pending");
+        statusComidas.classList.remove("status-ok");
       }
 
       const medAny = medManianaInput.checked || medNocheInput.checked;
       const medAll = medManianaInput.checked && medNocheInput.checked;
+
       if (medAll) {
-        statusMed.textContent = "Completa (turno)";
-        statusMed.className = "status-pill status-ok";
+        statusMed.textContent = "Medicación completa (turno)";
+        statusMed.classList.add("status-ok");
+        statusMed.classList.remove("status-pending");
       } else if (medAny) {
-        statusMed.textContent = "Incompleta (turno)";
-        statusMed.className = "status-pill status-pending";
+        statusMed.textContent = "Medicación incompleta (turno)";
+        statusMed.classList.add("status-pending");
+        statusMed.classList.remove("status-ok");
       } else {
-        statusMed.textContent = "Sin registrar (turno)";
-        statusMed.className = "status-pill status-danger";
+        statusMed.textContent = "Sin medicación registrada en este turno";
+        statusMed.classList.add("status-pending");
+        statusMed.classList.remove("status-ok");
       }
 
-      // 2. Resumen del Día (Dashboard)
       const fechaDia = fechaInput.value || hoyISO();
       try {
         const daily = await getDailySummary(fechaDia);
-        const partesHTML = []; 
+        const partes = [];
 
-        // 2.1. Estado de Comidas del Día
-        const todasComidasDia = daily.desayuno && daily.almuerzo && daily.merienda && daily.cena;
-        const comidaStatus = todasComidasDia ? 'status-ok' : 'status-pending';
-        let comidaTexto;
+        const todasComidasDia =
+          daily.desayuno && daily.almuerzo && daily.merienda && daily.cena;
+
         if (todasComidasDia) {
-            comidaTexto = '✅ Comidas Completas';
+          partes.push(
+            "✅ Todas las comidas del día registradas (desayuno, almuerzo, merienda y cena)."
+          );
         } else {
-            const faltantes = [];
-            if (!daily.desayuno) faltantes.push("D");
-            if (!daily.almuerzo) faltantes.push("A");
-            if (!daily.merienda) faltantes.push("M");
-            if (!daily.cena) faltantes.push("C");
-            comidaTexto = `⚠️ Faltan: ${faltantes.join(", ")}`;
+          const faltantes = [];
+          if (!daily.desayuno) faltantes.push("desayuno");
+          if (!daily.almuerzo) faltantes.push("almuerzo");
+          if (!daily.merienda) faltantes.push("merienda");
+          if (!daily.cena) faltantes.push("cena");
+          partes.push(
+            `⚠️ Faltan comidas por registrar: ${faltantes.join(", ")}.`
+          );
         }
-        partesHTML.push(`<div class="status-pill ${comidaStatus}">${comidaTexto}</div>`);
 
-        // 2.2. Estado de Medicación del Día
-        const medCompleta = daily.medManiana && daily.medNoche;
-        const medStatus = medCompleta ? 'status-ok' : (daily.medManiana || daily.medNoche ? 'status-pending' : 'status-danger');
-        let medTexto;
-        if (medCompleta) {
-            medTexto = '✅ Medicación Completa';
+        if (daily.medManiana && daily.medNoche) {
+          partes.push(
+            "✅ Medicación del día completa (mañana y noche registradas en al menos un turno)."
+          );
         } else if (daily.medManiana || daily.medNoche) {
-            medTexto = '⚠️ Medicación Incompleta';
+          partes.push("⚠️ Medicación incompleta (sólo una franja registrada).");
         } else {
-            medTexto = '❌ Sin Medicación';
+          partes.push("⚠️ No se registró medicación para este día.");
         }
-        partesHTML.push(`<div class="status-pill ${medStatus}">${medTexto}</div>`);
 
-        // 2.3. Consumo de Agua
         const vasos = daily.aguaVasos || 0;
-        const aguaStatus = vasos > 0 ? 'status-ok' : 'status-pending';
-        partesHTML.push(`<div class="status-pill ${aguaStatus}">💧 Agua: ${vasos} vaso(s)</div>`);
-        
-        // 2.4. Turnos Registrados
-        const turnoStatus = daily.turnos > 0 ? 'status-pill' : 'status-danger';
-        partesHTML.push(`<div class="status-pill ${turnoStatus}">📋 ${daily.turnos} Turno(s)</div>`);
-        
-        // 2.5. Estado de Ánimo (predominante)
-        const moods = Object.entries(daily.animoCounts);
-        moods.sort((a, b) => b[1] - a[1]); // Ordenar por conteo descendente
-        
-        if (moods.length > 0 && moods[0][1] > 0) {
-            const predominante = moods[0][0];
-            const emoji = moodEmoji(predominante);
-            const label = predominante === 'neutral' ? 'Normal' : (predominante === 'bien' ? 'Bien' : 'Mal');
-            partesHTML.push(`<div class="status-pill">${emoji} Ánimo: ${label}</div>`);
+        if (vasos > 0) {
+          partes.push(
+            `💧 Se registraron ${vasos} vaso(s) de agua en el día (valor consolidado).`
+          );
         } else {
-            partesHTML.push(`<div class="status-pill status-pending">😶 Ánimo no registrado</div>`);
+          partes.push("💧 No se registró agua para este día.");
         }
 
-        resumenTexto.innerHTML = partesHTML.join(''); 
-        
+        if (daily.turnos > 0) {
+          partes.push(`📋 Turnos registrados en el día: ${daily.turnos}.`);
+        } else {
+          partes.push("📋 Aún no hay turnos registrados para este día.");
+        }
+
+        resumenTexto.textContent = partes.join(" ");
       } catch (e) {
         console.error(e);
         resumenTexto.textContent =
           "No se pudo obtener el resumen diario (problema de conexión).";
       }
     }
-    // -----------------------------------------------------
 
-    // --- FUNCIÓN MEJORADA: Historial con Hora ---
     async function buildHistory() {
       try {
         const registros = await apiListar({ limite: 100 });
+
         if (!registros || registros.length === 0) {
           historialLista.innerHTML =
             "<div class='small-text'>Sin registros todavía.</div>";
           return;
         }
 
-        // Agrupamos por la clave completa (Fecha|Turno|Cuidador)
         const agrupados = new Map();
+
         registros.forEach((rec) => {
           const fechaStr =
             typeof rec.fecha === "string" ? rec.fecha.slice(0, 10) : rec.fecha;
@@ -1286,6 +1222,7 @@
             agrupados.set(key, rec);
           }
         });
+
         const condensados = Array.from(agrupados.values());
         historialLista.innerHTML = "";
 
@@ -1303,9 +1240,6 @@
 
           const agua = rec.agua_vasos ?? 0;
           const mood = moodEmoji(rec.estado_animo);
-          
-          // --- NUEVO: Horario del turno ---
-          const horario = getTurnoHorario(fechaStr, rec.turno);
 
           const item = document.createElement("div");
           item.className = "history-item";
@@ -1315,25 +1249,25 @@
 
           const title = document.createElement("div");
           title.className = "history-title";
-          // Título incluye el horario
           title.textContent = `${formatFecha(fechaStr)} · ${labelTurno(
             rec.turno
-          )} ${horario ? '(' + horario + ')' : ''}${mood ? " " + mood : ""}`;
+          )}${mood ? " " + mood : ""}`;
 
           const badge = document.createElement("div");
           badge.className = "badge";
           badge.textContent = labelCuidador(rec.cuidador);
+
           main.appendChild(title);
           main.appendChild(badge);
 
           const meta = document.createElement("div");
           meta.className = "history-meta";
           meta.textContent = rec.notas
-            ?
-            `Notas: ${rec.notas.slice(0, 200)}${
+            ? `Notas: ${rec.notas.slice(0, 200)}${
                 rec.notas.length > 200 ? "..." : ""
               }`
             : "Sin notas.";
+
           const summary = document.createElement("div");
           summary.className = "history-summary";
           summary.textContent = `Comidas: ${comidasCount}/4 · Med: ${medCount}/2 · Agua: ${agua} vaso(s)`;
@@ -1369,6 +1303,7 @@
             loadCurrentRecord();
             window.scrollTo({ top: 0, behavior: "smooth" });
           });
+
           historialLista.appendChild(item);
         });
       } catch (e) {
@@ -1377,7 +1312,6 @@
           "<div class='small-text'>No se pudo cargar el historial (problema de conexión).</div>";
       }
     }
-    // -----------------------------------------------------
 
     function sugerirTurnoYCuidadorSegunAhora() {
       const hoy = hoyISO();
@@ -1386,6 +1320,7 @@
       const { dow, minutes, now } = getNowInfo();
       const turnoGuess = guessTurnoFromMinutes(minutes);
       turnoSelect.value = turnoGuess;
+
       const scheduled = getCaregiverFor(dow, minutes);
 
       if (scheduled) {
@@ -1412,6 +1347,7 @@
       const turnoSel = turnoSelect.value;
 
       const scheduled = getScheduledCuidadorForFechaTurno(fechaSel, turnoSel);
+
       if (scheduled && newValue !== "otro" && newValue !== scheduled) {
         const nombreProgramado = labelCuidador(scheduled);
         const nombreNuevo = labelCuidador(newValue);
@@ -1445,78 +1381,51 @@
       panelLista.style.display = "";
     }
 
-    // --- FUNCIÓN MEJORADA: Renderizado de Lista de Compras ---
     function renderListaCompras() {
-      if (!listaPendientes || !listaComprados) return; 
-
-      const pendientes = listaComprasData.filter(item => item.estado !== "comprado");
-      const comprados = listaComprasData.filter(item => item.estado === "comprado");
-
-      // --- Renderizar PENDIENTES ---
-      if (pendientes.length === 0) {
-          listaPendientes.innerHTML = "<div class='small-text'>No hay pendientes por ahora.</div>";
-      } else {
-          listaPendientes.innerHTML = "";
-          const cont = document.createElement("div");
-          pendientes.forEach((item) => {
-              const row = document.createElement("div");
-              row.className = "lista-item";
-
-              const main = document.createElement("div");
-              main.className = "lista-item-main";
-              main.innerHTML = `<span class="lista-cat">${labelCategoria(
-                item.categoria
-              )}</span>: ${item.cantidad} ${item.item}`;
-
-              const acc = document.createElement("div");
-              acc.className = "lista-accion";
-              const btn = document.createElement("button");
-              btn.className = "lista-btn-small";
-              btn.textContent = "✅ Comprado";
-              btn.addEventListener("click", async () => {
-                try {
-                  await apiComprasMarcarComprado(item.id);
-                  await cargarListaCompras();
-                } 
-                catch (e) {
-                  console.error(e);
-                  alert("No se pudo actualizar la lista.");
-                }
-              });
-              acc.appendChild(btn);
-
-              row.appendChild(main);
-              row.appendChild(acc);
-              cont.appendChild(row);
-          });
-          listaPendientes.appendChild(cont);
+      if (!listaPendientes) return;
+      if (!listaComprasData || listaComprasData.length === 0) {
+        listaPendientes.innerHTML = "<div>No hay pendientes por ahora.</div>";
+        return;
       }
-      
-      // --- Renderizar COMPRADOS RECIENTEMENTE (Máx 5) ---
-      if (comprados.length === 0) {
-          listaComprados.innerHTML = "<div class='small-text'>Aún no hay ítems marcados como comprados.</div>";
-          listaLimpiarBtn.style.display = 'none';
-      } else {
-          listaLimpiarBtn.style.display = 'block';
-          listaComprados.innerHTML = "";
-          const contComprados = document.createElement("div");
-          comprados.slice(0, 5).forEach((item) => {
-              const row = document.createElement("div");
-              row.className = "lista-item";
-              row.style.opacity = 0.6; 
-              row.style.borderBottom = '1px dotted #ccc'; 
 
-              const main = document.createElement("div");
-              main.className = "lista-item-main";
-              main.innerHTML = `<span class="lista-cat">${labelCategoria(item.categoria)}</span>: ${item.cantidad} ${item.item}`;
+      listaPendientes.innerHTML = "";
+      const cont = document.createElement("div");
 
-              row.appendChild(main);
-              contComprados.appendChild(row);
-          });
-          listaComprados.appendChild(contComprados);
-      }
+      listaComprasData.forEach((item) => {
+        if (item.estado === "comprado") return;
+
+        const row = document.createElement("div");
+        row.className = "lista-item";
+
+        const main = document.createElement("div");
+        main.className = "lista-item-main";
+        main.innerHTML = `<span class="lista-cat">${labelCategoria(
+          item.categoria
+        )}</span>: ${item.cantidad} ${item.item}`;
+
+        const acc = document.createElement("div");
+        acc.className = "lista-accion";
+        const btn = document.createElement("button");
+        btn.className = "lista-btn-small";
+        btn.textContent = "✅ Comprado";
+        btn.addEventListener("click", async () => {
+          try {
+            await apiComprasMarcarComprado(item.id);
+            await cargarListaCompras();
+          } catch (e) {
+            console.error(e);
+            alert("No se pudo actualizar la lista.");
+          }
+        });
+        acc.appendChild(btn);
+
+        row.appendChild(main);
+        row.appendChild(acc);
+        cont.appendChild(row);
+      });
+
+      listaPendientes.appendChild(cont);
     }
-    // -----------------------------------------------------
 
     async function cargarListaCompras() {
       try {
@@ -1527,17 +1436,12 @@
         console.error(e);
         listaPendientes.innerHTML =
           "<div>No se pudo cargar la lista (problema de conexión).</div>";
-        listaComprados.innerHTML = ""; // Limpiar comprados en caso de error
       }
     }
 
-    // --- FUNCIÓN DEBOUCE DE GUARDADO ---
-    const debouncedSaveRecord = debounce(saveCurrentRecord, 500);
-    // ----------------------------------
-
-
     async function init() {
       currentDateLabel.textContent = "Hoy: " + formatHoyHumano();
+
       sugerirTurnoYCuidadorSegunAhora();
       await loadCurrentRecord();
       await buildHistory();
@@ -1547,12 +1451,15 @@
         suggestInfo.textContent = "";
         loadCurrentRecord();
       });
+
       turnoSelect.addEventListener("change", () => {
         loadCurrentRecord();
       });
+
       cuidadorSelect.addEventListener("change", () => {
         handleCuidadorChange();
       });
+
       [
         desayunoInput,
         almuerzoInput,
@@ -1562,15 +1469,17 @@
         medNocheInput,
       ].forEach((el) =>
         el.addEventListener("change", () => {
-          saveCurrentRecord(); // Autoguardado inmediato en checkboxes
+          saveCurrentRecord();
         })
       );
-      
-      // --- LISTENERS OPTIMIZADOS CON DEBOUNCE (500ms) ---
-      aguaInput.addEventListener("input", debouncedSaveRecord);
-      notasInput.addEventListener("input", debouncedSaveRecord);
-      // ---------------------------------------------------
-      
+
+      aguaInput.addEventListener("input", () => {
+        saveCurrentRecord();
+      });
+      notasInput.addEventListener("input", () => {
+        saveCurrentRecord();
+      });
+
       moodOptions.forEach((opt) => {
         const radio = opt.querySelector('input[name="estadoAnimo"]');
         opt.addEventListener("click", () => {
@@ -1578,12 +1487,14 @@
           saveCurrentRecord();
         });
       });
+
       resetDiaBtn.addEventListener("click", () => {
         if (!window.confirm("¿Seguro que querés borrar este turno completo?")) {
           return;
         }
         resetCurrentRecord();
       });
+
       exportDiaBtn.addEventListener("click", () => {
         const fecha = fechaInput.value || hoyISO();
         const url = `${API_BASE}/exportar-csv?fecha=${encodeURIComponent(
@@ -1591,10 +1502,12 @@
         )}`;
         window.open(url, "_blank");
       });
+
       btnTurnoAhora.addEventListener("click", () => {
         sugerirTurnoYCuidadorSegunAhora();
         loadCurrentRecord();
       });
+
       if (tabTurno && tabLista) {
         tabTurno.addEventListener("click", activarTabTurno);
         tabLista.addEventListener("click", activarTabLista);
@@ -1623,23 +1536,6 @@
           }
         });
       }
-      
-      // --- NUEVO LISTENER PARA LIMPIEZA DE COMPRAS ---
-      if (listaLimpiarBtn) {
-          listaLimpiarBtn.addEventListener("click", async () => {
-              if (!window.confirm("¿Seguro que querés BORRAR PERMANENTEMENTE todos los ítems marcados como comprados? Esta acción es irreversible.")) {
-                  return;
-              }
-              try {
-                  await apiComprasLimpiarComprados();
-                  await cargarListaCompras();
-              } catch (e) {
-                  console.error(e);
-                  alert("No se pudo limpiar la lista.");
-              }
-          });
-      }
-      // ------------------------------------------------
     }
 
     document.addEventListener("DOMContentLoaded", () => {
