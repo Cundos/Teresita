@@ -5,7 +5,6 @@
   <title>TERESITAPP</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Favicon emoji 👵🏻 -->
   <link
     rel="icon"
     type="image/svg+xml"
@@ -144,6 +143,21 @@
       background: #ffe7c7;
       color: #8a4b00;
     }
+    
+    /* NUEVO: Estado de peligro / sin registrar */
+    .status-danger {
+      background: #ffe5e5;
+      color: #a00000;
+    }
+
+    /* NUEVO: Contenedor para pills del Dashboard */
+    .dashboard-grid {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap; 
+        margin-bottom: 4px;
+        /* Reemplaza la clase small-text en el resumenTexto */
+    }
 
     .small-text {
       font-size: 0.8rem;
@@ -262,6 +276,7 @@
       padding: 2px 6px;
       border-radius: 999px;
       background: #eee;
+      white-space: nowrap;
     }
 
     .delete-button {
@@ -389,9 +404,17 @@
       border-bottom: 1px dashed #eee;
       font-size: 0.8rem;
     }
+    
+    .lista-item:last-of-type {
+        border-bottom: none;
+    }
 
     .lista-item-main {
       flex: 1;
+    }
+
+    .lista-cat {
+      font-weight: 600;
     }
 
     .lista-accion {
@@ -407,6 +430,15 @@
       cursor: pointer;
       background: #d4f5dd;
       color: #19692c;
+    }
+    
+    /* Estilo del botón de limpieza */
+    button#btnLimpiarComprados {
+        font-size: 0.8rem;
+        padding: 4px 10px;
+        background: #ffe5e5;
+        color: #a00000;
+        border: none;
     }
 
     .lista-btn-small:active {
@@ -429,7 +461,6 @@
     </div>
     <div class="today-label" id="currentDateLabel"></div>
 
-    <!-- Datos del turno + pestaña Lista -->
     <div class="card">
       <h2>
         <span>📅 Datos del turno</span>
@@ -439,7 +470,6 @@
         </div>
       </h2>
 
-      <!-- Panel Turno -->
       <div id="panelTurno">
         <div class="two-cols">
           <div class="row">
@@ -475,7 +505,6 @@
         </button>
       </div>
 
-      <!-- Panel Lista de compras -->
       <div id="panelLista" style="display:none; margin-top:4px;">
         <div class="small-text" style="margin-bottom:6px;">
           Usá esta pestaña para ir anotando lo que falte comprar. Se guarda en la base y se ve igual desde cualquier dispositivo.
@@ -503,11 +532,11 @@
 
         <button type="button" class="export-btn" id="listaAgregar">➕ Agregar a la lista</button>
 
-        <div class="small-text" style="margin-top:8px;">Pendientes:</div>
+        <div class="small-text" style="margin-top:12px; font-weight: 600;">Pendientes:</div>
         <div id="listaPendientes" class="small-text" style="margin-top:4px;"></div>
 
         <div style="display:flex; align-items:center; justify-content:space-between; margin-top:10px;">
-          <div class="small-text">Comprados recientemente:</div>
+          <div class="small-text" style="font-weight: 600;">Comprados recientemente:</div>
           <button type="button" class="lista-btn-small" id="btnLimpiarComprados">
             🧹 Limpiar
           </button>
@@ -516,7 +545,6 @@
       </div>
     </div>
 
-    <!-- Comidas -->
     <div class="card">
       <h2>
         <span>🍳 Comidas del día</span>
@@ -543,7 +571,6 @@
       <div class="small-text">Tildar en el turno en el que se realiza cada comida.</div>
     </div>
 
-    <!-- Agua -->
     <div class="card">
       <h2>💧 Agua (por turno)</h2>
       <div class="row">
@@ -553,7 +580,6 @@
       <div class="small-text">Actualizar a lo largo del día. Se consolida entre turnos.</div>
     </div>
 
-    <!-- Medicación -->
     <div class="card">
       <h2>
         <span>💊 Medicación del día</span>
@@ -574,7 +600,6 @@
       </div>
     </div>
 
-    <!-- Estado de ánimo -->
     <div class="card">
       <h2>Estado de ánimo (turno)</h2>
       <div class="mood-group">
@@ -597,7 +622,6 @@
       <div class="small-text">Elegir el estado de ánimo predominante en este turno.</div>
     </div>
 
-    <!-- Notas -->
     <div class="card">
       <h2>📝 Notas del turno</h2>
       <div class="row">
@@ -607,23 +631,20 @@
       <button class="reset-btn" id="resetDia">Borrar registro de este turno</button>
     </div>
 
-    <!-- Dashboard / resumen del día -->
     <div class="card">
       <h2>📊 Dashboard del día</h2>
-      <div id="resumenTexto" class="small-text"></div>
-    </div>
+      <div id="resumenTexto" class="dashboard-grid"></div> </div>
 
-    <!-- Historial -->
     <div class="card">
       <h2>Historial reciente</h2>
       <div class="small-text">
         Ver últimos turnos registrados. Tocá un ítem para cargarlo en el formulario.<br />
-        El resumen se consolida por día (comidas, medicación y agua).
+        El resumen se consolida por día (comidas, medicación y agua).<br/>
+        <span style="font-weight: 600;">*El horario indica cuándo se creó el registro.</span>
       </div>
       <div id="historialLista" class="history-list"></div>
     </div>
 
-    <!-- Calendario de turnos -->
     <div class="card">
       <h2>🗓️ Calendario de turnos</h2>
       <div class="small-text">Referencia según el cronograma acordado.</div>
@@ -686,7 +707,6 @@
       </table>
     </div>
 
-    <!-- Exportar -->
     <div class="card" id="exportCard">
       <h2>Exportar registros</h2>
       <button class="export-btn" id="exportDia">⬇️ Exportar día a Excel / Sheets</button>
@@ -706,6 +726,16 @@
     const params = new URLSearchParams(window.location.search);
     const viewParam = params.get("view");
     const isFamiliaView = viewParam === "familia" || viewParam === "readonly";
+
+    // --- NUEVA FUNCIÓN DEBOUCE PARA OPTIMIZACIÓN DE GUARDADO ---
+    function debounce(func, delay) {
+        let timeout;
+        return function(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), delay);
+        };
+    }
+    // -------------------------------------------------------------
 
     // --- API helpers turno ---
     async function apiGuardar(record) {
@@ -765,11 +795,21 @@
       if (!res.ok) throw new Error("Error al marcar compra");
       return await res.json();
     }
+    
+    // --- NUEVA API PARA LIMPIEZA DE COMPRAS (DEBE EXISTIR EN EL BACKEND) ---
+    async function apiComprasLimpiarComprados() {
+      const res = await fetch(API_BASE + "/compras-limpiar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!res.ok) throw new Error("Error al limpiar lista");
+      return await res.json();
+    }
+    // ------------------------------------------------------------------------
 
     // --- DOM refs ---
     const currentDateLabel = document.getElementById("currentDateLabel");
     const familiaBanner = document.getElementById("familiaBanner");
-
     const fechaInput       = document.getElementById("fecha");
     const turnoSelect      = document.getElementById("turno");
     const cuidadorSelect   = document.getElementById("cuidador");
@@ -800,7 +840,6 @@
     const tabLista   = document.getElementById("tabLista");
     const panelTurno = document.getElementById("panelTurno");
     const panelLista = document.getElementById("panelLista");
-
     const listaCategoria      = document.getElementById("listaCategoria");
     const listaItem           = document.getElementById("listaItem");
     const listaCantidad       = document.getElementById("listaCantidad");
@@ -817,44 +856,44 @@
     let saveTimeout = null;
     let lastCuidadorValue = cuidadorSelect.value;
     let listaComprasData = [];
-
-    // --- Calendario de turnos ---
+    
+    // --- Calendario de turnos (copia de tu código) ---
     const schedule = {
       1: [
-        { from: 0, to: 8 * 60,  cuidador: "rocio"     },
-        { from: 12 * 60, to: 18 * 60, cuidador: "guadalupe" },
-        { from: 20 * 60, to: 24 * 60, cuidador: "noelia"    }
+        { from: 0, to: 8 * 60,  cuidador: "rocio", horario: "20:00 - 08:00" },
+        { from: 12 * 60, to: 18 * 60, cuidador: "guadalupe", horario: "12:00 - 18:00" },
+        { from: 20 * 60, to: 24 * 60, cuidador: "noelia", horario: "20:00 - 08:00" }
       ],
       2: [
-        { from: 0, to: 8 * 60,  cuidador: "noelia"    },
-        { from: 12 * 60, to: 16 * 60, cuidador: "aylen"     },
-        { from: 21 * 60, to: 24 * 60, cuidador: "guadalupe" }
+        { from: 0, to: 8 * 60,  cuidador: "noelia", horario: "20:00 - 08:00" },
+        { from: 12 * 60, to: 16 * 60, cuidador: "aylen", horario: "12:00 - 16:00" },
+        { from: 21 * 60, to: 24 * 60, cuidador: "guadalupe", horario: "21:00 - 12:00" }
       ],
       3: [
-        { from: 0, to: 12 * 60, cuidador: "guadalupe" },
-        { from: 12 * 60, to: 18 * 60, cuidador: "guadalupe" },
-        { from: 20 * 60, to: 24 * 60, cuidador: "noelia"    }
+        { from: 0, to: 12 * 60, cuidador: "guadalupe", horario: "21:00 - 12:00" },
+        { from: 12 * 60, to: 18 * 60, cuidador: "guadalupe", horario: "12:00 - 18:00" },
+        { from: 20 * 60, to: 24 * 60, cuidador: "noelia", horario: "20:00 - 08:00" }
       ],
       4: [
-        { from: 0, to: 8 * 60,  cuidador: "noelia"    },
-        { from: 12 * 60, to: 16 * 60, cuidador: "aylen"     },
-        { from: 20 * 60, to: 24 * 60, cuidador: "noelia"    }
+        { from: 0, to: 8 * 60,  cuidador: "noelia", horario: "20:00 - 08:00" },
+        { from: 12 * 60, to: 16 * 60, cuidador: "aylen", horario: "12:00 - 16:00" },
+        { from: 20 * 60, to: 24 * 60, cuidador: "noelia", horario: "20:00 - 08:00" }
       ],
       5: [
-        { from: 0, to: 8 * 60,  cuidador: "noelia"    },
-        { from: 9 * 60, to: 18 * 60, cuidador: "guadalupe" },
-        { from: 20 * 60, to: 24 * 60, cuidador: "noelia"    }
+        { from: 0, to: 8 * 60,  cuidador: "noelia", horario: "20:00 - 08:00" },
+        { from: 9 * 60, to: 18 * 60, cuidador: "guadalupe", horario: "09:00 - 18:00" },
+        { from: 20 * 60, to: 24 * 60, cuidador: "noelia", horario: "20:00 - 08:00" }
       ],
       6: [
-        { from: 0, to: 8 * 60,  cuidador: "noelia"    },
-        { from: 20 * 60, to: 24 * 60, cuidador: "rocio"     }
+        { from: 0, to: 8 * 60,  cuidador: "noelia", horario: "20:00 - 08:00" },
+        { from: 20 * 60, to: 24 * 60, cuidador: "rocio", horario: "20:00 - 08:00" }
       ],
       0: [
-        { from: 0, to: 8 * 60,  cuidador: "rocio"     },
-        { from: 19 * 60, to: 24 * 60, cuidador: "rocio"     }
+        { from: 0, to: 8 * 60,  cuidador: "rocio", horario: "19:00 - 08:00" },
+        { from: 19 * 60, to: 24 * 60, cuidador: "rocio", horario: "19:00 - 08:00" }
       ]
     };
-
+    
     function hoyISO() {
       const hoy = new Date();
       const y = hoy.getFullYear();
@@ -892,11 +931,14 @@
       let minutes;
       switch (turno) {
         case "maniana":
-          minutes = 9 * 60; break;
+          minutes = 9 * 60;
+          break;
         case "tarde":
-          minutes = 15 * 60; break;
+          minutes = 15 * 60;
+          break;
         case "noche":
-          minutes = 22 * 60; break;
+          minutes = 22 * 60;
+          break;
         case "completo":
         default:
           minutes = 12 * 60;
@@ -909,6 +951,31 @@
       if (minutes >= 12 * 60 && minutes < 20 * 60) return "tarde";
       return "noche";
     }
+
+    // --- NUEVA FUNCIÓN: Obtener horario del turno ---
+    function getTurnoHorario(fechaStr, turno) {
+        const base = fechaStr || hoyISO();
+        const fecha = new Date(base + "T12:00:00");
+        const dow = fecha.getDay();
+        const daySched = schedule[dow] || [];
+        
+        let targetMinutes;
+        switch (turno) {
+            case "maniana": targetMinutes = 9 * 60; break;
+            case "tarde": targetMinutes = 15 * 60; break;
+            case "noche": targetMinutes = 22 * 60; break;
+            default: targetMinutes = 12 * 60; // Completo
+        }
+        
+        for (const slot of daySched) {
+            // Buscamos un slot que contenga la hora representativa del turno
+            if (targetMinutes >= slot.from && targetMinutes < slot.to) {
+                return slot.horario;
+            }
+        }
+        return null;
+    }
+    // ----------------------------------------------
 
     function getSelectedMood() {
       let value = "";
@@ -1030,7 +1097,6 @@
 
     async function getDailySummary(fechaStr) {
       const registros = await apiListar({ fecha: fechaStr });
-
       const result = {
         desayuno: false,
         almuerzo: false,
@@ -1039,9 +1105,9 @@
         medManiana: false,
         medNoche: false,
         aguaVasos: 0,
-        turnos: 0
+        turnos: 0,
+        animoCounts: { bien: 0, neutral: 0, mal: 0 } // NUEVO
       };
-
       registros.forEach(rec => {
         result.turnos += 1;
         if (rec.desayuno)    result.desayuno = true;
@@ -1052,10 +1118,113 @@
         if (rec.med_noche)   result.medNoche = true;
         const agua = rec.agua_vasos || 0;
         if (agua > result.aguaVasos) result.aguaVasos = agua;
+        
+        // Contar estados de ánimo (NUEVO)
+        if (rec.estado_animo && rec.estado_animo in result.animoCounts) {
+            result.animoCounts[rec.estado_animo]++;
+        }
       });
-
       return result;
     }
+
+    // --- FUNCIÓN MEJORADA: Dashboard Visual ---
+    async function actualizarEstadosVisuales() {
+      // 1. Estados del turno actual (Tu lógica original)
+      const anyMeal = desayunoInput.checked || almuerzoInput.checked ||
+                      meriendaInput.checked || cenaInput.checked;
+      const allMeals = desayunoInput.checked && almuerzoInput.checked &&
+                       meriendaInput.checked && cenaInput.checked;
+      statusComidas.classList.remove("status-ok", "status-pending", "status-danger");
+      if (allMeals) {
+        statusComidas.textContent = "Completas (turno)";
+        statusComidas.classList.add("status-ok");
+      } else if (anyMeal) {
+        statusComidas.textContent = "Incompletas (turno)";
+        statusComidas.classList.add("status-pending");
+      } else {
+        statusComidas.textContent = "Sin registrar (turno)";
+        statusComidas.classList.add("status-danger");
+      }
+
+      const medAny = medManianaInput.checked || medNocheInput.checked;
+      const medAll = medManianaInput.checked && medNocheInput.checked;
+      statusMed.classList.remove("status-ok", "status-pending", "status-danger");
+      if (medAll) {
+        statusMed.textContent = "Completa (turno)";
+        statusMed.classList.add("status-ok");
+      } else if (medAny) {
+        statusMed.textContent = "Incompleta (turno)";
+        statusMed.classList.add("status-pending");
+      } else {
+        statusMed.textContent = "Sin registrar (turno)";
+        statusMed.classList.add("status-danger");
+      }
+
+      // 2. Resumen del Día (Dashboard MEJORADO)
+      const fechaDia = fechaInput.value || hoyISO();
+      try {
+        const daily = await getDailySummary(fechaDia);
+        const partesHTML = []; 
+
+        // 2.1. Estado de Comidas del Día
+        const todasComidasDia = daily.desayuno && daily.almuerzo && daily.merienda && daily.cena;
+        const comidaStatus = todasComidasDia ? 'status-ok' : 'status-pending';
+        let comidaTexto;
+        if (todasComidasDia) {
+            comidaTexto = '✅ Comidas Completas';
+        } else {
+            const faltantes = [];
+            if (!daily.desayuno) faltantes.push("D");
+            if (!daily.almuerzo) faltantes.push("A");
+            if (!daily.merienda) faltantes.push("M");
+            if (!daily.cena) faltantes.push("C");
+            comidaTexto = `⚠️ Faltan: ${faltantes.join(", ")}`;
+        }
+        partesHTML.push(`<div class="status-pill ${comidaStatus}">${comidaTexto}</div>`);
+
+        // 2.2. Estado de Medicación del Día
+        const medCompleta = daily.medManiana && daily.medNoche;
+        const medStatus = medCompleta ? 'status-ok' : (daily.medManiana || daily.medNoche ? 'status-pending' : 'status-danger');
+        let medTexto;
+        if (medCompleta) {
+            medTexto = '✅ Med. Completa';
+        } else if (daily.medManiana || daily.medNoche) {
+            medTexto = '⚠️ Med. Incompleta';
+        } else {
+            medTexto = '❌ Sin Medicación';
+        }
+        partesHTML.push(`<div class="status-pill ${medStatus}">${medTexto}</div>`);
+
+        // 2.3. Consumo de Agua
+        const vasos = daily.aguaVasos || 0;
+        const aguaStatus = vasos >= 6 ? 'status-ok' : (vasos > 0 ? 'status-pending' : 'status-danger'); // Arbitrario: 6 vasos OK
+        partesHTML.push(`<div class="status-pill ${aguaStatus}">💧 Agua: ${vasos} vaso(s)</div>`);
+        
+        // 2.4. Turnos Registrados
+        const turnoStatus = daily.turnos > 0 ? 'status-pill' : 'status-danger';
+        partesHTML.push(`<div class="status-pill ${turnoStatus}">📋 ${daily.turnos} Turno(s)</div>`);
+        
+        // 2.5. Estado de Ánimo (predominante)
+        const moods = Object.entries(daily.animoCounts);
+        moods.sort((a, b) => b[1] - a[1]); 
+        
+        if (moods.length > 0 && moods[0][1] > 0) {
+            const predominante = moods[0][0];
+            const emoji = moodEmoji(predominante);
+            const label = predominante === 'neutral' ? 'Normal' : (predominante === 'bien' ? 'Bien' : 'Mal');
+            partesHTML.push(`<div class="status-pill">${emoji} Ánimo: ${label}</div>`);
+        } else {
+            partesHTML.push(`<div class="status-pill status-pending">😶 Ánimo no registrado</div>`);
+        }
+
+        resumenTexto.innerHTML = partesHTML.join(''); // Usamos innerHTML para las pills
+        
+      } catch (e) {
+        console.error(e);
+        resumenTexto.textContent = "No se pudo obtener el resumen diario (problema de conexión).";
+      }
+    }
+    // ------------------------------------------------------------------------
 
     async function saveCurrentRecord() {
       const record = {
@@ -1072,7 +1241,6 @@
         notas: notasInput.value || "",
         estadoAnimo: getSelectedMood()
       };
-
       try {
         await apiGuardar(record);
         mostrarGuardado();
@@ -1128,96 +1296,13 @@
       await saveCurrentRecord();
     }
 
-    async function actualizarEstadosVisuales() {
-      const anyMeal = desayunoInput.checked || almuerzoInput.checked ||
-                      meriendaInput.checked || cenaInput.checked;
-      const allMeals = desayunoInput.checked && almuerzoInput.checked &&
-                       meriendaInput.checked && cenaInput.checked;
-
-      if (allMeals) {
-        statusComidas.textContent = "Comidas completas (turno)";
-        statusComidas.classList.add("status-ok");
-        statusComidas.classList.remove("status-pending");
-      } else if (anyMeal) {
-        statusComidas.textContent = "Comidas incompletas (turno)";
-        statusComidas.classList.add("status-pending");
-        statusComidas.classList.remove("status-ok");
-      } else {
-        statusComidas.textContent = "Sin comidas registradas en este turno";
-        statusComidas.classList.add("status-pending");
-        statusComidas.classList.remove("status-ok");
-      }
-
-      const medAny = medManianaInput.checked || medNocheInput.checked;
-      const medAll = medManianaInput.checked && medNocheInput.checked;
-
-      if (medAll) {
-        statusMed.textContent = "Medicación completa (turno)";
-        statusMed.classList.add("status-ok");
-        statusMed.classList.remove("status-pending");
-      } else if (medAny) {
-        statusMed.textContent = "Medicación incompleta (turno)";
-        statusMed.classList.add("status-pending");
-        statusMed.classList.remove("status-ok");
-      } else {
-        statusMed.textContent = "Sin medicación registrada en este turno";
-        statusMed.classList.add("status-pending");
-        statusMed.classList.remove("status-ok");
-      }
-
-      const fechaDia = fechaInput.value || hoyISO();
-      try {
-        const daily = await getDailySummary(fechaDia);
-        const partes = [];
-
-        const todasComidasDia = daily.desayuno && daily.almuerzo &&
-                                daily.merienda && daily.cena;
-
-        if (todasComidasDia) {
-          partes.push("✅ Todas las comidas del día registradas (desayuno, almuerzo, merienda y cena).");
-        } else {
-          const faltantes = [];
-          if (!daily.desayuno) faltantes.push("desayuno");
-          if (!daily.almuerzo) faltantes.push("almuerzo");
-          if (!daily.merienda) faltantes.push("merienda");
-          if (!daily.cena)     faltantes.push("cena");
-          partes.push(`⚠️ Faltan comidas por registrar: ${faltantes.join(", ")}.`);
-        }
-
-        if (daily.medManiana && daily.medNoche) {
-          partes.push("✅ Medicación del día completa (mañana y noche registradas en al menos un turno).");
-        } else if (daily.medManiana || daily.medNoche) {
-          partes.push("⚠️ Medicación incompleta (sólo una franja registrada).");
-        } else {
-          partes.push("⚠️ No se registró medicación para este día.");
-        }
-
-        const vasos = daily.aguaVasos || 0;
-        if (vasos > 0) {
-          partes.push(`💧 Se registraron ${vasos} vaso(s) de agua en el día (valor consolidado).`);
-        } else {
-          partes.push("💧 No se registró agua para este día.");
-        }
-
-        if (daily.turnos > 0) {
-          partes.push(`📋 Turnos registrados en el día: ${daily.turnos}.`);
-        } else {
-          partes.push("📋 Aún no hay turnos registrados para este día.");
-        }
-
-        const textoResumen = partes.join(" ");
-        resumenTexto.textContent = textoResumen;
-      } catch (e) {
-        console.error(e);
-        resumenTexto.textContent = "No se pudo obtener el resumen diario (problema de conexión).";
-      }
-    }
-
+    // --- FUNCIÓN MEJORADA: Renderizado de Lista de Compras ---
     function renderListaCompras() {
-      if (!listaPendientes) return;
+      if (!listaPendientes || !listaComprados) return; 
+
       const pendientes = listaComprasData.filter(it => it.estado !== "comprado");
       const comprados  = listaComprasData.filter(it => it.estado === "comprado");
-
+      
       function buildGroup(container, items, options) {
         container.innerHTML = "";
         if (!items.length) {
@@ -1233,56 +1318,62 @@
         });
 
         byCat.forEach((list, cat) => {
-          const catTitle = document.createElement("div");
-          catTitle.style.marginTop = "4px";
-          catTitle.innerHTML = `<strong>${labelCategoria(cat)}</strong>`;
-          container.appendChild(catTitle);
+            const catTitle = document.createElement("div");
+            catTitle.style.marginTop = (container.children.length > 0 ? "8px" : "0");
+            catTitle.innerHTML = `<strong class="lista-cat">${labelCategoria(cat)}</strong>`;
+            container.appendChild(catTitle);
 
-          list.forEach(item => {
-            const row = document.createElement("div");
-            row.className = "lista-item";
-
-            const main = document.createElement("div");
-            main.className = "lista-item-main";
-            const cantTxt = item.cantidad ? `${item.cantidad} ` : "";
-            main.textContent = `${cantTxt}${item.item}`;
-            row.appendChild(main);
-
-            if (options && options.showCompradoButton) {
-              const acc = document.createElement("div");
-              acc.className = "lista-accion";
-              const btn = document.createElement("button");
-              btn.className = "lista-btn-small";
-              btn.textContent = "✅ Comprado";
-              btn.addEventListener("click", async () => {
-                try {
-                  await apiComprasMarcarComprado(item.id);
-                  await cargarListaCompras();
-                } catch (e) {
-                  console.error(e);
-                  alert("No se pudo actualizar la lista.");
+            list.forEach(item => {
+                const row = document.createElement("div");
+                row.className = "lista-item";
+                if (options.isComprado) {
+                    row.style.opacity = 0.6; // Comprados se ven atenuados
+                    row.style.borderBottom = 'none'; // No tienen dash
                 }
-              });
-              acc.appendChild(btn);
-              row.appendChild(acc);
-            } else if (options && options.showFecha) {
-              const acc = document.createElement("div");
-              acc.className = "lista-accion";
-              acc.textContent = formatFechaCompra(item);
-              row.appendChild(acc);
-            }
 
-            container.appendChild(row);
-          });
+                const main = document.createElement("div");
+                main.className = "lista-item-main";
+                const cantTxt = item.cantidad ? `${item.cantidad} ` : "";
+                main.textContent = `${cantTxt}${item.item}`;
+                row.appendChild(main);
+
+                if (options && options.showCompradoButton) {
+                    const acc = document.createElement("div");
+                    acc.className = "lista-accion";
+                    const btn = document.createElement("button");
+                    btn.className = "lista-btn-small";
+                    btn.textContent = "✅ Comprado";
+                    btn.addEventListener("click", async () => {
+                        try {
+                            await apiComprasMarcarComprado(item.id);
+                            await cargarListaCompras();
+                        } 
+                        catch (e) {
+                            console.error(e);
+                            alert("No se pudo actualizar la lista.");
+                        }
+                    });
+                    acc.appendChild(btn);
+                    row.appendChild(acc);
+                } else if (options && options.showFecha) {
+                    const acc = document.createElement("div");
+                    acc.className = "lista-accion";
+                    acc.textContent = formatFechaCompra(item);
+                    row.appendChild(acc);
+                }
+
+                container.appendChild(row);
+            });
         });
       }
 
-      buildGroup(listaPendientes, pendientes, { showCompradoButton: !isFamiliaView });
-
+      buildGroup(listaPendientes, pendientes, { showCompradoButton: !isFamiliaView, isComprado: false });
       if (listaComprados) {
-        buildGroup(listaComprados, comprados, { showCompradoButton: false, showFecha: true });
+        // Mostrar solo los últimos 10 comprados
+        buildGroup(listaComprados, comprados.slice(0, 10), { showCompradoButton: false, showFecha: true, isComprado: true }); 
       }
     }
+    // ------------------------------------------------------------------------
 
     async function cargarListaCompras() {
       try {
@@ -1296,10 +1387,10 @@
       }
     }
 
+    // --- FUNCIÓN MEJORADA: Historial con Hora ---
     async function buildHistory() {
       try {
         const registros = await apiListar({ limite: 100 });
-
         if (!registros || registros.length === 0) {
           historialLista.innerHTML = "<div class='small-text'>Sin registros todavía.</div>";
           return;
@@ -1311,7 +1402,6 @@
           const key = `${fechaStr}|${rec.turno}|${rec.cuidador}`;
           if (!agrupados.has(key)) agrupados.set(key, rec);
         });
-
         const condensados = Array.from(agrupados.values());
         historialLista.innerHTML = "";
 
@@ -1329,7 +1419,8 @@
 
           const agua = rec.agua_vasos ?? 0;
           const mood = moodEmoji(rec.estado_animo);
-          const hora = getHoraDesdeRec(rec);
+          const horaRegistro = getHoraDesdeRec(rec); // Hora de creación
+          const horarioProgramado = getTurnoHorario(fechaStr, rec.turno); // Horario programado
 
           const item = document.createElement("div");
           item.className = "history-item";
@@ -1339,13 +1430,13 @@
 
           const title = document.createElement("div");
           title.className = "history-title";
-          title.textContent = `${formatFecha(fechaStr)} · ${labelTurno(rec.turno)}${mood ? " " + mood : ""}`;
+          // Muestra la fecha y el turno, y si hay horario programado lo añade
+          title.textContent = `${formatFecha(fechaStr)} · ${labelTurno(rec.turno)}${horarioProgramado ? ` (${horarioProgramado})` : ''}${mood ? " " + mood : ""}`;
 
           const badge = document.createElement("div");
           badge.className = "badge";
-          badge.textContent = hora
-            ? `${labelCuidador(rec.cuidador)} · ${hora}`
-            : labelCuidador(rec.cuidador);
+          // Muestra cuidador y hora de registro (creación)
+          badge.textContent = `${labelCuidador(rec.cuidador)}${horaRegistro ? ` · ${horaRegistro}` : ''}`;
 
           main.appendChild(title);
           main.appendChild(badge);
@@ -1353,9 +1444,9 @@
           const meta = document.createElement("div");
           meta.className = "history-meta";
           meta.textContent = rec.notas
-            ? `Notas: ${rec.notas.slice(0, 200)}${rec.notas.length > 200 ? "..." : ""}`
+            ?
+            `Notas: ${rec.notas.slice(0, 200)}${rec.notas.length > 200 ? "..." : ""}`
             : "Sin notas.";
-
           const summary = document.createElement("div");
           summary.className = "history-summary";
           summary.textContent = `Comidas: ${comidasCount}/4 · Med: ${medCount}/2 · Agua: ${agua} vaso(s)`;
@@ -1394,7 +1485,6 @@
             loadCurrentRecord();
             window.scrollTo({ top: 0, behavior: "smooth" });
           });
-
           historialLista.appendChild(item);
         });
       } catch (e) {
@@ -1402,6 +1492,15 @@
         historialLista.innerHTML = "<div class='small-text'>No se pudo cargar el historial (problema de conexión).</div>";
       }
     }
+    // ------------------------------------------------------------------------
+
+    async function saveCurrentRecordDebounced() {
+        if (isFamiliaView) return;
+        await saveCurrentRecord();
+    }
+    
+    // --- FUNCIÓN DEBOUCE PARA OPTIMIZACIÓN ---
+    const debouncedSaveRecord = debounce(saveCurrentRecordDebounced, 500);
 
     function sugerirTurnoYCuidadorSegunAhora() {
       const hoy = hoyISO();
@@ -1410,7 +1509,6 @@
       const { dow, minutes, now } = getNowInfo();
       const turnoGuess = guessTurnoFromMinutes(minutes);
       turnoSelect.value = turnoGuess;
-
       const scheduled = getCaregiverFor(dow, minutes);
 
       if (scheduled) {
@@ -1433,7 +1531,6 @@
       const turnoSel = turnoSelect.value;
 
       const scheduled = getScheduledCuidadorForFechaTurno(fechaSel, turnoSel);
-
       if (scheduled && newValue !== "otro" && newValue !== scheduled) {
         const nombreProgramado = labelCuidador(scheduled);
         const nombreNuevo      = labelCuidador(newValue);
@@ -1467,6 +1564,7 @@
       panelLista.style.display = "";
     }
 
+    // --- FUNCIÓN MEJORADA: Limpieza de Comprados ---
     function setupLimpiarComprados() {
       if (!btnLimpiarComprados) return;
       if (isFamiliaView) {
@@ -1474,20 +1572,31 @@
         return;
       }
       btnLimpiarComprados.style.display = "inline-block";
-      btnLimpiarComprados.addEventListener("click", () => {
-        const pin = window.prompt("Ingresá el PIN para limpiar la lista de comprados:");
-        if (pin !== DELETE_PIN) return;
-        // limpieza lógica local
-        listaComprasData = listaComprasData.filter(it => it.estado !== "comprado");
-        renderListaCompras();
+      
+      btnLimpiarComprados.addEventListener("click", async () => {
+          const pin = window.prompt("Ingresá el PIN para limpiar la lista de comprados:");
+          if (pin !== DELETE_PIN) return;
+          
+          if (!window.confirm("CONFIRMACIÓN FINAL: Esto borrará PERMANENTEMENTE los ítems comprados de la base de datos.")) {
+              return;
+          }
+
+          try {
+            await apiComprasLimpiarComprados(); // Llama a la nueva API
+            await cargarListaCompras();
+            alert("Lista de comprados limpiada con éxito.");
+          } catch (e) {
+            console.error(e);
+            alert("ERROR: No se pudo limpiar la lista. Revisar conexión o implementación de la ruta /api/compras-limpiar.");
+          }
       });
     }
+    // ------------------------------------------------------------------------
 
     function aplicarModoFamilia() {
       if (!isFamiliaView) return;
 
       if (familiaBanner) familiaBanner.style.display = "block";
-
       // Fecha editable para navegar; turno/cuidador bloqueados
       turnoSelect.disabled    = true;
       cuidadorSelect.disabled = true;
@@ -1515,11 +1624,9 @@
         opt.style.pointerEvents = "none";
         opt.style.opacity = 0.6;
       });
-
       if (resetDiaBtn)   resetDiaBtn.style.display = "none";
       if (btnTurnoAhora) btnTurnoAhora.style.display = "none";
       if (listaAgregarBtn) listaAgregarBtn.style.display = "none";
-
       // Export visible en familia
       if (exportCard)   exportCard.style.display = "block";
       if (exportDiaBtn) exportDiaBtn.style.display = "block";
@@ -1537,86 +1644,102 @@
         sugerirTurnoYCuidadorSegunAhora();
         await loadCurrentRecord();
 
-      await buildHistory();
-      await cargarListaCompras();
+        await buildHistory();
+        await cargarListaCompras();
 
-       fechaInput.addEventListener("change", () => {
-        const hoy = hoyISO();
-        if (fechaInput.value && fechaInput.value > hoy) {
-          alert("No se pueden cargar datos en fechas futuras. Se volvió a la fecha de hoy.");
-          fechaInput.value = hoy;
-        }
-        suggestInfo.textContent = "";
-        loadCurrentRecord();
-      });
-
-      turnoSelect.addEventListener("change", () => {
-        loadCurrentRecord();
-      });
-
-      cuidadorSelect.addEventListener("change", () => {
-        handleCuidadorChange();
-      });
-
-      [
-        desayunoInput,
-        almuerzoInput,
-        meriendaInput,
-        cenaInput,
-        medManianaInput,
-        medNocheInput
-      ].forEach(el =>
-        el.addEventListener("change", () => {
-          if (isFamiliaView) return;
-          saveCurrentRecord();
-        })
-      );
-
-      aguaInput.addEventListener("input", () => {
-        if (isFamiliaView) return;
-        saveCurrentRecord();
-      });
-
-      notasInput.addEventListener("input", () => {
-        if (isFamiliaView) return;
-        saveCurrentRecord();
-      });
-
-      moodOptions.forEach(opt => {
-        const radio = opt.querySelector('input[name="estadoAnimo"]');
-        opt.addEventListener("click", () => {
-          if (isFamiliaView) return;
-          setMoodUI(radio.value);
-          saveCurrentRecord();
+        fechaInput.addEventListener("change", () => {
+            const hoy = hoyISO();
+            if (fechaInput.value && fechaInput.value > hoy) {
+                alert("No se pueden cargar datos en fechas futuras. Se volvió a la fecha de hoy.");
+                fechaInput.value = hoy;
+            }
+            suggestInfo.textContent = "";
+            loadCurrentRecord();
         });
-      });
+        turnoSelect.addEventListener("change", () => {
+            loadCurrentRecord();
+        });
+        cuidadorSelect.addEventListener("change", () => {
+            handleCuidadorChange();
+        });
+        
+        // Checkboxes con guardado inmediato
+        [
+            desayunoInput,
+            almuerzoInput,
+            meriendaInput,
+            cenaInput,
+            medManianaInput,
+            medNocheInput
+        ].forEach(el =>
+            el.addEventListener("change", () => {
+                if (isFamiliaView) return;
+                saveCurrentRecord();
+            })
+        );
 
-      resetDiaBtn.addEventListener("click", () => {
-        const ok = window.confirm("¿Seguro que querés borrar este turno completo?");
-        if (!ok) return;
-        resetCurrentRecord();
-      });
+        // Campos de texto y números con Debounce (500ms)
+        aguaInput.addEventListener("input", debouncedSaveRecord);
+        notasInput.addEventListener("input", debouncedSaveRecord);
 
-      exportDiaBtn.addEventListener("click", () => {
-        const fecha = fechaInput.value || hoyISO();
-        const url = `${API_BASE}/exportar-csv?fecha=${encodeURIComponent(fecha)}`;
-        window.open(url, "_blank");
-      });
+        moodOptions.forEach(opt => {
+            const radio = opt.querySelector('input[name="estadoAnimo"]');
+            opt.addEventListener("click", () => {
+                if (isFamiliaView) return;
+                setMoodUI(radio.value);
+                saveCurrentRecord();
+            });
+        });
+        
+        resetDiaBtn.addEventListener("click", () => {
+            const ok = window.confirm("¿Seguro que querés borrar este turno completo?");
+            if (!ok) return;
+            resetCurrentRecord();
+        });
+        
+        exportDiaBtn.addEventListener("click", () => {
+            const fecha = fechaInput.value || hoyISO();
+            const url = `${API_BASE}/exportar-csv?fecha=${encodeURIComponent(fecha)}`;
+            window.open(url, "_blank");
+        });
+        
+        btnTurnoAhora.addEventListener("click", () => {
+            sugerirTurnoYCuidadorSegunAhora();
+            loadCurrentRecord();
+        });
+        
+        if (tabTurno && tabLista) {
+            tabTurno.addEventListener("click", activarTabTurno);
+            tabLista.addEventListener("click", activarTabLista);
+            activarTabTurno();
+        }
 
-      btnTurnoAhora.addEventListener("click", () => {
-        sugerirTurnoYCuidadorSegunAhora();
-        loadCurrentRecord();
-      });
+        if (listaAgregarBtn) {
+            listaAgregarBtn.addEventListener("click", async () => {
+                const categoria = listaCategoria.value || "otro";
+                const item = (listaItem.value || "").trim();
+                const cantidad = (listaCantidad.value || "").trim() || "1";
 
-      if (tabTurno && tabLista) {
-        tabTurno.addEventListener("click", activarTabTurno);
-        tabLista .addEventListener("click", activarTabLista);
-        activarTabTurno();
-      }
+                if (!item) {
+                    alert("Escribí qué hay que comprar.");
+                    return;
+                }
 
-      setupLimpiarComprados();
-      aplicarModoFamilia();
-      await actualizarEstadosVisuales();
+                try {
+                    await apiComprasAgregar({ categoria, item, cantidad });
+                    listaItem.value = "";
+                    listaCantidad.value = "";
+                    await cargarListaCompras();
+                } catch (e) {
+                    console.error(e);
+                    alert("No se pudo guardar en la lista.");
+                }
+            });
+        }
+
+        setupLimpiarComprados(); // Setup del botón Limpiar (mejorado)
+        aplicarModoFamilia();
+        await actualizarEstadosVisuales();
     }
 
     document.addEventListener("DOMContentLoaded", init);
