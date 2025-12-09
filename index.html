@@ -776,11 +776,9 @@
     /* DOM refs */
     const currentDateLabel = document.getElementById("currentDateLabel");
     const familiaBanner = document.getElementById("familiaBanner");
-
     const fechaInput = document.getElementById("fecha");
     const turnoSelect = document.getElementById("turno");
     const cuidadorSelect = document.getElementById("cuidador");
-
     const desayunoInput = document.getElementById("desayuno");
     const almuerzoInput = document.getElementById("almuerzo");
     const meriendaInput = document.getElementById("merienda");
@@ -789,7 +787,6 @@
     const medManianaInput = document.getElementById("medManiana");
     const medNocheInput = document.getElementById("medNoche");
     const notasInput = document.getElementById("notas");
-
     const statusComidas = document.getElementById("statusComidas");
     const statusMed = document.getElementById("statusMed");
     const resumenTexto = document.getElementById("resumenTexto");
@@ -798,22 +795,19 @@
     const historialLista = document.getElementById("historialLista");
     const suggestInfo = document.getElementById("suggestInfo");
     const turnoInfo = document.getElementById("turnoInfo");
-    const exportDiaBtn = document.getElementById("exportDia");
+    const exportDiaBtn  = document.getElementById("exportDia");
+    const exportCard    = exportDiaBtn ? exportDiaBtn.closest(".card") : null;
           // El botón de exportar sólo se usa en modo familia
       if (!isFamiliaView && exportDiaBtn) {
         exportDiaBtn.style.display = "none";
       }
-
     const btnTurnoAhora = document.getElementById("btnTurnoAhora");
-
     const moodOptions = document.querySelectorAll(".mood-option");
     const moodRadios = document.querySelectorAll('input[name="estadoAnimo"]');
-
     const tabTurno = document.getElementById("tabTurno");
     const tabLista = document.getElementById("tabLista");
     const panelTurno = document.getElementById("panelTurno");
     const panelLista = document.getElementById("panelLista");
-
     const listaCategoria = document.getElementById("listaCategoria");
     const listaItem = document.getElementById("listaItem");
     const listaCantidad = document.getElementById("listaCantidad");
@@ -1560,14 +1554,15 @@
     }
 
     function aplicarModoFamilia() {
-      if (!isFamiliaView) return;
-
-      if (familiaBanner) familiaBanner.style.display = "block";
-
-      if (exportDiaBtn) {
+    // En modo familia no se agregan nuevos ítems de compra
+    if (listaAgregarBtn) listaAgregarBtn.style.display = "none";
+    // Mostrar export sólo en familia
+    if (exportCard) {
+      exportCard.style.display = "block";
+    }
+    if (exportDiaBtn) {
       exportDiaBtn.style.display = "block";
     }
-
       // Permitir cambiar fecha, pero bloquear el resto de la edición del turno
       turnoSelect.disabled = true;
       cuidadorSelect.disabled = true;
@@ -1715,5 +1710,6 @@
   </script>
 </body>
 </html>
+
 
 
