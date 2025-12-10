@@ -1,35 +1,41 @@
 // /api/lista-compras-listar.js
-const { query } = require("./_db");
+import { sql } from "./db.js";
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   if (req.method !== "GET") {
-    return res.status(405).json({ ok: false, error: "Método no permitido" });
+    return res
+      .status(405)
+      .json({ ok: false, error: "Método no permitido (usar GET)" });
   }
 
   try {
-    const result = await query(
-      `
+    // Traemos todo y los ordenamos:
+    // 1) pendientes primero
+    // 2) luego comprados
+    // 3) más nuevos arriba
+    const rows = await sql`
       SELECT
         id,
         categoria,
         producto,
         cantidad,
         estado,
-        creado_por,
-        creado_en,
-        comprado_por,
-        comprado_en
+        creado
       FROM lista_compras
       ORDER BY
-        estado = 'pendiente' DESC,   -- primero pendientes
-        categoria ASC,
-        creado_en ASC
-      `
-    );
+        (estado = 'pendiente') DESC,
+        creado DESC
+    `;
 
-    res.status(200).json({ ok: true, items: result.rows });
+    return res.status(200).json({
+      ok: true,
+      items: rows,     // la app usa items
+      registros: rows, // por si en algún lado usamos registros
+    });
   } catch (err) {
-    console.error("Error lista-compras-listar:", err);
-    res.status(500).json({ ok: false, error: "Error al listar la lista de compras" });
+    console.error("Error al listar la lista de compras:", err);
+    return res
+      .status(500)
+      .json({ ok: false, error: "Error al listar la lista de compras" });
   }
-};
+}
