@@ -1,5 +1,5 @@
 // /api/lista-compras-listar.js
-import { sql } from "./db.js";
+import sql from "./db.js";
 
 export default async function handler(req, res) {
   if (req.method !== "GET") {
@@ -9,10 +9,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 1) Nos aseguramos de que la tabla exista
+    // Aseguramos que la tabla exista (idempotente)
     await sql`
       CREATE TABLE IF NOT EXISTS lista_compras (
-        id       SERIAL PRIMARY KEY,
+        id        SERIAL PRIMARY KEY,
         categoria TEXT NOT NULL,
         producto  TEXT NOT NULL,
         cantidad  TEXT NOT NULL,
@@ -21,7 +21,6 @@ export default async function handler(req, res) {
       );
     `;
 
-    // 2) Leemos los datos
     const rows = await sql`
       SELECT
         id,
@@ -46,7 +45,7 @@ export default async function handler(req, res) {
     return res.status(500).json({
       ok: false,
       error: "Error al listar la lista de compras",
-      detail: String(err)        // 👈 esto nos dice qué pasó realmente
+      detail: String(err)
     });
   }
 }
