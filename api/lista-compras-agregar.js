@@ -1,5 +1,5 @@
 // /api/lista-compras-agregar.js
-import { sql } from "./db.js";
+import sql from "./db.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -23,16 +23,16 @@ export default async function handler(req, res) {
       RETURNING id, categoria, producto, cantidad, estado, creado
     `;
 
-    const item = rows[0];
-
     return res.status(200).json({
       ok: true,
-      item,
+      item: rows[0]
     });
   } catch (err) {
     console.error("Error al agregar a la lista de compras:", err);
-    return res
-      .status(500)
-      .json({ ok: false, error: "Error al agregar a la lista de compras" });
+    return res.status(500).json({
+      ok: false,
+      error: "Error al agregar a la lista de compras",
+      detail: String(err)
+    });
   }
 }
