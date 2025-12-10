@@ -739,32 +739,7 @@
     }
 
     // --- API lista compras ---
-async function apiComprasListar() {
-  const url = new URL(API_BASE + "/lista-compras-listar", window.location.origin);
-  const res = await fetch(url.toString());
-  if (!res.ok) throw new Error("Error al listar compras");
-  return await res.json();
-}
-
-async function apiComprasAgregar(item) {
-  const res = await fetch(API_BASE + "/lista-compras-agregar", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(item),
-  });
-  if (!res.ok) throw new Error("Error al agregar compra");
-  return await res.json();
-}
-
-async function apiComprasMarcarComprado(id) {
-  const res = await fetch(API_BASE + "/lista-compras-marcar", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id, estado: "comprado" }),
-  });
-  if (!res.ok) throw new Error("Error al marcar compra");
-  return await res.json();
-}
+async function apiComprasListar() 
 
     // --- DOM refs ---
     const currentDateLabel = document.getElementById("currentDateLabel");
@@ -1611,4 +1586,5 @@ async function apiComprasMarcarComprado(id) {
   </script>
 </body>
 </html>
+
 
