@@ -1,36 +1,48 @@
 // /api/lista-compras-marcar.js
-const { query } = require("./_db");
+import { sql } from "./db.js";
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({ ok: false, error: "Método no permitido" });
+    return res
+      .status(405)
+      .json({ ok: false, error: "Método no permitido (usar POST)" });
   }
 
   try {
-    const { id, estado, compradoPor } = req.body || {};
+    const { id, estado } = req.body || {};
 
-    if (!id || !estado) {
-      return res.status(400).json({ ok: false, error: "Faltan parámetros" });
+    if (!id) {
+      return res
+        .status(400)
+        .json({ ok: false, error: "Falta el id del ítem a actualizar" });
     }
 
-    const esComprado = estado === "comprado";
+    // Por defecto, si no viene estado, marcamos como "comprado"
+    const nuevoEstado = estado === "pendiente" ? "pendiente" : "comprado";
 
-    const result = await query(
-      `
+    const rows = await sql`
       UPDATE lista_compras
-      SET
-        estado = $2,
-        comprado_por = CASE WHEN $2 = 'comprado' THEN $3 ELSE NULL END,
-        comprado_en = CASE WHEN $2 = 'comprado' THEN now() ELSE NULL END
-      WHERE id = $1
-      RETURNING *
-      `,
-      [id, estado, compradoPor || null]
-    );
+      SET estado = ${nuevoEstado}
+      WHERE id = ${id}
+      RETURNING id, categoria, producto, cantidad, estado, creado
+    `;
 
-    res.status(200).json({ ok: true, item: result.rows[0] });
+    if (rows.length === 0) {
+      return res
+        .status(404)
+        .json({ ok: false, error: "Ítem de lista no encontrado" });
+    }
+
+    const item = rows[0];
+
+    return res.status(200).json({
+      ok: true,
+      item,
+    });
   } catch (err) {
-    console.error("Error lista-compras-marcar:", err);
-    res.status(500).json({ ok: false, error: "Error al actualizar el ítem" });
+    console.error("Error al marcar ítem de lista:", err);
+    return res
+      .status(500)
+      .json({ ok: false, error: "Error al marcar ítem de la lista" });
   }
-};
+}
