@@ -2,14 +2,14 @@
 const { getPool } = require("./db.js");
 
 async function ensureTable(pool) {
+  // Definición mínima, sin columna "creado"
   await pool.query(`
     CREATE TABLE IF NOT EXISTS lista_compras (
       id        SERIAL PRIMARY KEY,
       categoria TEXT NOT NULL,
       producto  TEXT NOT NULL,
       cantidad  TEXT NOT NULL,
-      estado    TEXT NOT NULL DEFAULT 'pendiente',
-      creado    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      estado    TEXT NOT NULL DEFAULT 'pendiente'
     )
   `);
 }
@@ -24,30 +24,27 @@ module.exports = async (req, res) => {
   try {
     const pool = getPool();
 
-    // Aseguramos la tabla
+    // Si la tabla ya existe, esto no la rompe
     await ensureTable(pool);
 
-    // Pendientes primero, luego comprados, más nuevos arriba
-    const { rows } = await pool.query(
-      `
+    // Ordenamos: pendientes primero, luego comprados, y dentro de eso id DESC
+    const { rows } = await pool.query(`
       SELECT
         id,
         categoria,
         producto,
         cantidad,
-        estado,
-        creado
+        estado
       FROM lista_compras
       ORDER BY
         (estado = 'pendiente') DESC,
-        creado DESC
-      `
-    );
+        id DESC
+    `);
 
     return res.status(200).json({
       ok: true,
       items: rows,
-      registros: rows, // por si en algún lado usás "registros"
+      registros: rows,
     });
   } catch (err) {
     console.error("Error al listar la lista de compras:", err);
