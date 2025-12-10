@@ -8,8 +8,7 @@ async function ensureTable(pool) {
       categoria TEXT NOT NULL,
       producto  TEXT NOT NULL,
       cantidad  TEXT NOT NULL,
-      estado    TEXT NOT NULL DEFAULT 'pendiente',
-      creado    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      estado    TEXT NOT NULL DEFAULT 'pendiente'
     )
   `);
 }
@@ -38,7 +37,7 @@ module.exports = async (req, res) => {
       `
       INSERT INTO lista_compras (categoria, producto, cantidad, estado)
       VALUES ($1, $2, $3, 'pendiente')
-      RETURNING id, categoria, producto, cantidad, estado, creado
+      RETURNING id, categoria, producto, cantidad, estado
       `,
       [categoria, producto, cantidad]
     );
