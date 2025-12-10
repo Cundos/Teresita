@@ -9,10 +9,19 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Traemos todo y los ordenamos:
-    // 1) pendientes primero
-    // 2) luego comprados
-    // 3) más nuevos arriba
+    // 1) Nos aseguramos de que la tabla exista
+    await sql`
+      CREATE TABLE IF NOT EXISTS lista_compras (
+        id       SERIAL PRIMARY KEY,
+        categoria TEXT NOT NULL,
+        producto  TEXT NOT NULL,
+        cantidad  TEXT NOT NULL,
+        estado    TEXT NOT NULL DEFAULT 'pendiente',
+        creado    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `;
+
+    // 2) Leemos los datos
     const rows = await sql`
       SELECT
         id,
@@ -29,13 +38,15 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       ok: true,
-      items: rows,     // la app usa items
-      registros: rows, // por si en algún lado usamos registros
+      items: rows,
+      registros: rows
     });
   } catch (err) {
     console.error("Error al listar la lista de compras:", err);
-    return res
-      .status(500)
-      .json({ ok: false, error: "Error al listar la lista de compras" });
+    return res.status(500).json({
+      ok: false,
+      error: "Error al listar la lista de compras",
+      detail: String(err)        // 👈 esto nos dice qué pasó realmente
+    });
   }
 }
