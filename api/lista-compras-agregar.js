@@ -1,30 +1,38 @@
 // /api/lista-compras-agregar.js
-const { query } = require("./_db");
+import { sql } from "./db.js";
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({ ok: false, error: "Método no permitido" });
+    return res
+      .status(405)
+      .json({ ok: false, error: "Método no permitido (usar POST)" });
   }
 
   try {
-    const { categoria, producto, cantidad, creadoPor } = req.body || {};
+    const { categoria, producto, cantidad } = req.body || {};
 
     if (!categoria || !producto || !cantidad) {
-      return res.status(400).json({ ok: false, error: "Faltan datos obligatorios" });
+      return res
+        .status(400)
+        .json({ ok: false, error: "Faltan datos para agregar a la lista" });
     }
 
-    const result = await query(
-      `
-      INSERT INTO lista_compras (categoria, producto, cantidad, creado_por)
-      VALUES ($1, $2, $3, $4)
-      RETURNING *
-      `,
-      [categoria, producto, cantidad, creadoPor || null]
-    );
+    const rows = await sql`
+      INSERT INTO lista_compras (categoria, producto, cantidad, estado)
+      VALUES (${categoria}, ${producto}, ${cantidad}, 'pendiente')
+      RETURNING id, categoria, producto, cantidad, estado, creado
+    `;
 
-    res.status(200).json({ ok: true, item: result.rows[0] });
+    const item = rows[0];
+
+    return res.status(200).json({
+      ok: true,
+      item,
+    });
   } catch (err) {
-    console.error("Error lista-compras-agregar:", err);
-    res.status(500).json({ ok: false, error: "Error al agregar a la lista" });
+    console.error("Error al agregar a la lista de compras:", err);
+    return res
+      .status(500)
+      .json({ ok: false, error: "Error al agregar a la lista de compras" });
   }
-};
+}
