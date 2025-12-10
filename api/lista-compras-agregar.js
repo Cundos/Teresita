@@ -1,7 +1,20 @@
-// /api/lista-compras-agregar.js
-import sql from "./db.js";
+// api/lista-compras-agregar.js
+const { getPool } = require("./db.js");
 
-export default async function handler(req, res) {
+async function ensureTable(pool) {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS lista_compras (
+      id        SERIAL PRIMARY KEY,
+      categoria TEXT NOT NULL,
+      producto  TEXT NOT NULL,
+      cantidad  TEXT NOT NULL,
+      estado    TEXT NOT NULL DEFAULT 'pendiente',
+      creado    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+}
+
+module.exports = async (req, res) => {
   if (req.method !== "POST") {
     return res
       .status(405)
@@ -9,30 +22,37 @@ export default async function handler(req, res) {
   }
 
   try {
+    const pool = getPool();
+    await ensureTable(pool);
+
     const { categoria, producto, cantidad } = req.body || {};
 
     if (!categoria || !producto || !cantidad) {
-      return res
-        .status(400)
-        .json({ ok: false, error: "Faltan datos para agregar a la lista" });
+      return res.status(400).json({
+        ok: false,
+        error: "Faltan datos para agregar a la lista (categoría, producto, cantidad)",
+      });
     }
 
-    const rows = await sql`
+    const { rows } = await pool.query(
+      `
       INSERT INTO lista_compras (categoria, producto, cantidad, estado)
-      VALUES (${categoria}, ${producto}, ${cantidad}, 'pendiente')
+      VALUES ($1, $2, $3, 'pendiente')
       RETURNING id, categoria, producto, cantidad, estado, creado
-    `;
+      `,
+      [categoria, producto, cantidad]
+    );
 
     return res.status(200).json({
       ok: true,
-      item: rows[0]
+      item: rows[0],
     });
   } catch (err) {
     console.error("Error al agregar a la lista de compras:", err);
     return res.status(500).json({
       ok: false,
       error: "Error al agregar a la lista de compras",
-      detail: String(err)
+      detail: err.message,
     });
   }
-}
+};
