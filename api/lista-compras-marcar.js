@@ -1,5 +1,5 @@
 // /api/lista-compras-marcar.js
-import { sql } from "./db.js";
+import sql from "./db.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -17,7 +17,6 @@ export default async function handler(req, res) {
         .json({ ok: false, error: "Falta el id del ítem a actualizar" });
     }
 
-    // Por defecto, si no viene estado, marcamos como "comprado"
     const nuevoEstado = estado === "pendiente" ? "pendiente" : "comprado";
 
     const rows = await sql`
@@ -33,16 +32,16 @@ export default async function handler(req, res) {
         .json({ ok: false, error: "Ítem de lista no encontrado" });
     }
 
-    const item = rows[0];
-
     return res.status(200).json({
       ok: true,
-      item,
+      item: rows[0]
     });
   } catch (err) {
     console.error("Error al marcar ítem de lista:", err);
-    return res
-      .status(500)
-      .json({ ok: false, error: "Error al marcar ítem de la lista" });
+    return res.status(500).json({
+      ok: false,
+      error: "Error al marcar ítem de la lista",
+      detail: String(err)
+    });
   }
 }
