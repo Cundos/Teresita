@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
       UPDATE lista_compras
       SET estado = $1
       WHERE id = $2
-      RETURNING id, categoria, producto, cantidad, estado, creado
+      RETURNING id, categoria, producto, cantidad, estado
       `,
       [nuevoEstado, id]
     );
