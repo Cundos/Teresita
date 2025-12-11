@@ -739,57 +739,36 @@
     }
 
     // --- API lista compras ---
-    async function apiComprasListar() {
-      const url = new URL(API_BASE + "/lista-compras-listar", window.location.origin);
-      const res = await fetch(url.toString());
-      if (!res.ok) throw new Error("Error al listar compras");
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error || "Error lógico al listar compras");
-      return data.items || [];
-    }
+    // --- API lista compras ---
+async function apiComprasListar() {
+  const res = await fetch(`${API_BASE}/lista-compras-listar`);
+  if (!res.ok) throw new Error("Error al listar la lista de compras");
+  const data = await res.json();
 
-    async function apiComprasAgregar(item) {
-      const res = await fetch(API_BASE + "/lista-compras-agregar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(item),
-      });
-      if (!res.ok) throw new Error("Error HTTP al agregar compra");
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error || "Error lógico al agregar compra");
-      return data.item;
-    }
+  // Soportar varios formatos posibles
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data.items)) return data.items;
+  if (Array.isArray(data.registros)) return data.registros;
+  return [];
+}
 
-    async function apiComprasMarcarComprado(id, nuevoEstado = "comprado") {
-      const res = await fetch(API_BASE + "/lista-compras-marcar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, estado: nuevoEstado }),
-      });
-      if (!res.ok) throw new Error("Error HTTP al marcar compra");
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error || "Error lógico al marcar compra");
-      return data.item;
-    }
+async function apiComprasAgregar(item) {
+  const res = await fetch(`${API_BASE}/lista-compras-agregar`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(item),
+  });
+  if (!res.ok) throw new Error("Error al agregar a la lista de compras");
+  try { return await res.json(); } catch { return {}; }
+}
 
-      async function apiComprasLimpiarComprados() {
-        const res = await fetch(API_BASE + "/lista-compras-limpiar", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" }
-        });
-      
-        if (!res.ok) {
-          const txt = await res.text().catch(() => "");
-          throw new Error("Error HTTP al limpiar comprados: " + txt);
-        }
-      
-        const data = await res.json().catch(() => ({}));
-        if (!data.ok) {
-          throw new Error(data.error || data.detail || "Error lógico al limpiar comprados");
-        }
-      
-        return data.deleted ?? 0;
-      }
+async function apiComprasMarcarComprado(id) {
+  const url = new URL(`${API_BASE}/lista-compras-marcar`, window.location.origin);
+  url.searchParams.set("id", id);
+  const res = await fetch(url.toString(), { method: "POST" });
+  if (!res.ok) throw new Error("Error al marcar como comprado");
+  try { return await res.json(); } catch { return {}; }
+}
 
 
     // --- DOM refs ---
@@ -1241,8 +1220,20 @@
 
     function renderListaCompras() {
       if (!listaPendientes) return;
-      const pendientes = listaComprasData.filter(it => it.estado !== "comprado");
-      const comprados  = listaComprasData.filter(it => it.estado === "comprado");
+  const cleanAfter = getCleanAfterDate();
+
+const pendientes = listaComprasData.filter(it => it.estado !== "comprado");
+
+const comprados = listaComprasData.filter(it => {
+  if (it.estado !== "comprado") return false;
+  if (!cleanAfter) return true;
+  const raw = it.comprado_en || it.updated_at || it.created_at;
+  if (!raw) return true;
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) return true;
+  return d > cleanAfter; // sólo mostrar comprados “nuevos”
+});
+
 
       function buildGroup(container, items, options) {
         container.innerHTML = "";
@@ -1495,6 +1486,19 @@
 
   btnLimpiarComprados.style.display = "inline-block";
   btnLimpiarComprados.addEventListener("click", async () => {
+    const LIMPIAR_KEY = "listaComprasCleanAfter";
+    
+    function getCleanAfterDate() {
+      try {
+        const v = localStorage.getItem(LIMPIAR_KEY);
+        if (!v) return null;
+        const d = new Date(v);
+        return isNaN(d.getTime()) ? null : d;
+      } catch {
+        return null;
+      }
+    }
+
     const pin = window.prompt("Ingresá el PIN para limpiar la lista de comprados:");
     if (pin !== DELETE_PIN) return;
 
@@ -1667,5 +1671,6 @@
   </script>
 </body>
 </html>
+
 
 
