@@ -772,19 +772,25 @@
       return data.item;
     }
 
-    async function apiComprasLimpiarComprados() {
-  const res = await fetch(API_BASE + "/lista-compras-limpiar", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" }
-  });
-  if (!res.ok) throw new Error("Error HTTP al limpiar comprados");
+      async function apiComprasLimpiarComprados() {
+        const res = await fetch(API_BASE + "/lista-compras-limpiar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" }
+        });
+      
+        if (!res.ok) {
+          const txt = await res.text().catch(() => "");
+          throw new Error("Error HTTP al limpiar comprados: " + txt);
+        }
+      
+        const data = await res.json().catch(() => ({}));
+        if (!data.ok) {
+          throw new Error(data.error || data.detail || "Error lógico al limpiar comprados");
+        }
+      
+        return data.deleted ?? 0;
+      }
 
-  const data = await res.json();
-  if (!data.ok) throw new Error(data.error || "Error lógico al limpiar comprados");
-
-  // data.deleted suele traer cuántos borró (si lo usás más adelante)
-  return data.deleted ?? 0;
-}
 
     // --- DOM refs ---
     const currentDateLabel = document.getElementById("currentDateLabel");
@@ -1661,4 +1667,5 @@
   </script>
 </body>
 </html>
+
 
