@@ -2,17 +2,9 @@
 const { getPool } = require("./db.js");
 
 module.exports = async (req, res) => {
-  // Sólo permitimos POST
-  if (req.method !== "POST") {
-    return res.status(405).json({
-      ok: false,
-      error: "Método no permitido. Usá POST.",
-    });
-  }
+  const pool = getPool();
 
   try {
-    const pool = getPool();
-
     // Borra todos los ítems marcados como "comprado"
     const result = await pool.query(
       "DELETE FROM lista_compras WHERE estado = $1",
@@ -21,10 +13,10 @@ module.exports = async (req, res) => {
 
     return res.status(200).json({
       ok: true,
-      deleted: result.rowCount, // cuántas filas borró
+      deleted: result.rowCount,
     });
   } catch (err) {
-    console.error("Error en lista-compras-limpiar:", err);
+    console.error("Error al limpiar la lista de compras:", err);
     return res.status(500).json({
       ok: false,
       error: "Error al limpiar la lista de compras",
