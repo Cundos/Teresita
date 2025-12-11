@@ -739,7 +739,38 @@
     }
 
     // --- API lista compras ---
-async function apiComprasListar() 
+    async function apiComprasListar() {
+      const url = new URL(API_BASE + "/lista-compras-listar", window.location.origin);
+      const res = await fetch(url.toString());
+      if (!res.ok) throw new Error("Error al listar compras");
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || "Error lógico al listar compras");
+      return data.items || [];
+    }
+
+    async function apiComprasAgregar(item) {
+      const res = await fetch(API_BASE + "/lista-compras-agregar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(item),
+      });
+      if (!res.ok) throw new Error("Error HTTP al agregar compra");
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || "Error lógico al agregar compra");
+      return data.item;
+    }
+
+    async function apiComprasMarcarComprado(id, nuevoEstado = "comprado") {
+      const res = await fetch(API_BASE + "/lista-compras-marcar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, estado: nuevoEstado }),
+      });
+      if (!res.ok) throw new Error("Error HTTP al marcar compra");
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || "Error lógico al marcar compra");
+      return data.item;
+    }
 
     // --- DOM refs ---
     const currentDateLabel = document.getElementById("currentDateLabel");
@@ -1220,7 +1251,7 @@ async function apiComprasListar()
             const main = document.createElement("div");
             main.className = "lista-item-main";
             const cantTxt = item.cantidad ? `${item.cantidad} ` : "";
-            main.textContent = `${cantTxt}${item.item}`;
+            main.textContent = `${cantTxt}${item.producto}`;
             row.appendChild(main);
 
             if (options && options.showCompradoButton) {
@@ -1452,7 +1483,7 @@ async function apiComprasListar()
       btnLimpiarComprados.addEventListener("click", () => {
         const pin = window.prompt("Ingresá el PIN para limpiar la lista de comprados:");
         if (pin !== DELETE_PIN) return;
-        // limpieza lógica local
+        // limpieza lógica local (simple por ahora)
         listaComprasData = listaComprasData.filter(it => it.estado !== "comprado");
         renderListaCompras();
       });
@@ -1502,6 +1533,11 @@ async function apiComprasListar()
 
     async function init() {
       currentDateLabel.textContent = "Hoy: " + formatHoyHumano();
+
+      // No permitir fechas futuras
+      if (fechaInput) {
+        fechaInput.max = hoyISO();
+      }
 
       sugerirTurnoYCuidadorSegunAhora();
       await loadCurrentRecord();
@@ -1580,11 +1616,36 @@ async function apiComprasListar()
       setupLimpiarComprados();
       aplicarModoFamilia();
       await actualizarEstadosVisuales();
+
+      // Alta de ítem de lista de compras
+      if (listaAgregarBtn) {
+        listaAgregarBtn.addEventListener("click", async () => {
+          if (isFamiliaView) return;
+          const categoria = listaCategoria.value || "otro";
+          const producto  = (listaItem.value || "").trim();
+          const cantidad  = (listaCantidad.value || "").trim() || "1";
+          if (!producto) {
+            alert("Ingresá un producto.");
+            return;
+          }
+          try {
+            await apiComprasAgregar({
+              categoria,
+              producto,
+              cantidad
+            });
+            listaItem.value = "";
+            listaCantidad.value = "";
+            await cargarListaCompras();
+          } catch (e) {
+            console.error(e);
+            alert("No se pudo agregar a la lista.");
+          }
+        });
+      }
     }
 
     document.addEventListener("DOMContentLoaded", init);
   </script>
 </body>
 </html>
-
-
