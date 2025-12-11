@@ -760,15 +760,29 @@
       return [];
     }
 
-    async function apiComprasAgregar(item) {
-      const res = await fetch(`${API_BASE}/lista-compras-agregar`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(item),
-      });
-      if (!res.ok) throw new Error("Error al agregar a la lista de compras");
-      try { return await res.json(); } catch { return {}; }
-    }
+       async function apiComprasAgregar(item) {
+        // Enviamos datos por querystring, como probablemente espera tu API de Vercel
+        const url = new URL(`${API_BASE}/lista-compras-agregar`, window.location.origin);
+      
+        url.searchParams.set("categoria", item.categoria || "");
+        url.searchParams.set("item",      item.item      || "");
+        url.searchParams.set("cantidad",  item.cantidad  || "");
+      
+        const res = await fetch(url.toString(), { method: "GET" });
+      
+        if (!res.ok) {
+          const txt = await res.text().catch(() => "");
+          console.error("Error API agregar:", res.status, txt);
+          throw new Error("Error al agregar a la lista de compras");
+        }
+      
+        try {
+          return await res.json();
+        } catch {
+          return {};
+        }
+      }
+
 
     async function apiComprasMarcarComprado(id) {
       const url = new URL(`${API_BASE}/lista-compras-marcar`, window.location.origin);
@@ -1669,3 +1683,4 @@
   </script>
 </body>
 </html>
+
