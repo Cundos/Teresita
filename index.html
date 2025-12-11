@@ -545,7 +545,7 @@
 
     <!-- Agua -->
     <div class="card">
-      <h2>💧 Agua (por turno)</h2>
+      <h2>💧 Agua (día completo)</h2>
       <div class="row">
         <label for="aguaVasos">Vasos tomados en el día</label>
         <input type="number" id="aguaVasos" min="0" max="40" step="1" inputmode="numeric" />
@@ -701,13 +701,24 @@
   <script>
     const API_BASE = "/api";
     const DELETE_PIN = "1905";
+    const LIMPIAR_KEY = "listaComprasCleanAfter";
 
-    // Modo familia / solo lectura
     const params = new URLSearchParams(window.location.search);
     const viewParam = params.get("view");
     const isFamiliaView = viewParam === "familia" || viewParam === "readonly";
 
-    // --- API helpers turno ---
+    function getCleanAfterDate() {
+      try {
+        const v = localStorage.getItem(LIMPIAR_KEY);
+        if (!v) return null;
+        const d = new Date(v);
+        return isNaN(d.getTime()) ? null : d;
+      } catch {
+        return null;
+      }
+    }
+
+    // --- API helpers turnos ---
     async function apiGuardar(record) {
       const res = await fetch(API_BASE + "/guardar-registro", {
         method: "POST",
@@ -738,38 +749,34 @@
       return await res.json();
     }
 
-    // --- API lista compras ---
-    // --- API lista compras ---
-async function apiComprasListar() {
-  const res = await fetch(`${API_BASE}/lista-compras-listar`);
-  if (!res.ok) throw new Error("Error al listar la lista de compras");
-  const data = await res.json();
+    // --- API lista compras (Neon) ---
+    async function apiComprasListar() {
+      const res = await fetch(`${API_BASE}/lista-compras-listar`);
+      if (!res.ok) throw new Error("Error al listar la lista de compras");
+      const data = await res.json();
+      if (Array.isArray(data)) return data;
+      if (Array.isArray(data.items)) return data.items;
+      if (Array.isArray(data.registros)) return data.registros;
+      return [];
+    }
 
-  // Soportar varios formatos posibles
-  if (Array.isArray(data)) return data;
-  if (Array.isArray(data.items)) return data.items;
-  if (Array.isArray(data.registros)) return data.registros;
-  return [];
-}
+    async function apiComprasAgregar(item) {
+      const res = await fetch(`${API_BASE}/lista-compras-agregar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(item),
+      });
+      if (!res.ok) throw new Error("Error al agregar a la lista de compras");
+      try { return await res.json(); } catch { return {}; }
+    }
 
-async function apiComprasAgregar(item) {
-  const res = await fetch(`${API_BASE}/lista-compras-agregar`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(item),
-  });
-  if (!res.ok) throw new Error("Error al agregar a la lista de compras");
-  try { return await res.json(); } catch { return {}; }
-}
-
-async function apiComprasMarcarComprado(id) {
-  const url = new URL(`${API_BASE}/lista-compras-marcar`, window.location.origin);
-  url.searchParams.set("id", id);
-  const res = await fetch(url.toString(), { method: "POST" });
-  if (!res.ok) throw new Error("Error al marcar como comprado");
-  try { return await res.json(); } catch { return {}; }
-}
-
+    async function apiComprasMarcarComprado(id) {
+      const url = new URL(`${API_BASE}/lista-compras-marcar`, window.location.origin);
+      url.searchParams.set("id", id);
+      const res = await fetch(url.toString(), { method: "POST" });
+      if (!res.ok) throw new Error("Error al marcar como comprado");
+      try { return await res.json(); } catch { return {}; }
+    }
 
     // --- DOM refs ---
     const currentDateLabel = document.getElementById("currentDateLabel");
@@ -896,15 +903,11 @@ async function apiComprasMarcarComprado(id) {
 
       let minutes;
       switch (turno) {
-        case "maniana":
-          minutes = 9 * 60; break;
-        case "tarde":
-          minutes = 15 * 60; break;
-        case "noche":
-          minutes = 22 * 60; break;
+        case "maniana": minutes = 9 * 60;  break;
+        case "tarde":   minutes = 15 * 60; break;
+        case "noche":   minutes = 22 * 60; break;
         case "completo":
-        default:
-          minutes = 12 * 60;
+        default:        minutes = 12 * 60;
       }
       return getCaregiverFor(dow, minutes);
     }
@@ -1218,22 +1221,23 @@ async function apiComprasMarcarComprado(id) {
       }
     }
 
+    // --- Lista de compras ---
     function renderListaCompras() {
       if (!listaPendientes) return;
-  const cleanAfter = getCleanAfterDate();
 
-const pendientes = listaComprasData.filter(it => it.estado !== "comprado");
+      const cleanAfter = getCleanAfterDate();
 
-const comprados = listaComprasData.filter(it => {
-  if (it.estado !== "comprado") return false;
-  if (!cleanAfter) return true;
-  const raw = it.comprado_en || it.updated_at || it.created_at;
-  if (!raw) return true;
-  const d = new Date(raw);
-  if (isNaN(d.getTime())) return true;
-  return d > cleanAfter; // sólo mostrar comprados “nuevos”
-});
+      const pendientes = listaComprasData.filter(it => it.estado !== "comprado");
 
+      const comprados = listaComprasData.filter(it => {
+        if (it.estado !== "comprado") return false;
+        if (!cleanAfter) return true;
+        const raw = it.comprado_en || it.updated_at || it.created_at;
+        if (!raw) return true;
+        const d = new Date(raw);
+        if (isNaN(d.getTime())) return true;
+        return d > cleanAfter; // sólo mostrar comprados nuevos
+      });
 
       function buildGroup(container, items, options) {
         container.innerHTML = "";
@@ -1262,7 +1266,7 @@ const comprados = listaComprasData.filter(it => {
             const main = document.createElement("div");
             main.className = "lista-item-main";
             const cantTxt = item.cantidad ? `${item.cantidad} ` : "";
-            main.textContent = `${cantTxt}${item.producto}`;
+            main.textContent = `${cantTxt}${item.item}`;
             row.appendChild(main);
 
             if (options && options.showCompradoButton) {
@@ -1270,7 +1274,7 @@ const comprados = listaComprasData.filter(it => {
               acc.className = "lista-accion";
               const btn = document.createElement("button");
               btn.className = "lista-btn-small";
-              btn.textContent = "✅ Marcar Comprado";
+              btn.textContent = "✅ Lo compré";
               btn.addEventListener("click", async () => {
                 try {
                   await apiComprasMarcarComprado(item.id);
@@ -1310,6 +1314,59 @@ const comprados = listaComprasData.filter(it => {
         console.error(e);
         listaPendientes.innerHTML = "<div>No se pudo cargar la lista (problema de conexión).</div>";
         if (listaComprados) listaComprados.innerHTML = "";
+      }
+    }
+
+    function setupListaEventos() {
+      if (listaAgregarBtn) {
+        listaAgregarBtn.addEventListener("click", async () => {
+          if (isFamiliaView) return;
+
+          const categoria = listaCategoria.value || "otro";
+          const item = (listaItem.value || "").trim();
+          const cantidad = (listaCantidad.value || "").trim();
+
+          if (!item) {
+            alert("Escribí qué hay que comprar (producto).");
+            return;
+          }
+
+          const originalText = listaAgregarBtn.textContent;
+          listaAgregarBtn.disabled = true;
+          listaAgregarBtn.textContent = "Guardando...";
+
+          try {
+            await apiComprasAgregar({ categoria, item, cantidad });
+            listaItem.value = "";
+            listaCantidad.value = "";
+            await cargarListaCompras();
+          } catch (e) {
+            console.error(e);
+            alert("No se pudo agregar a la lista. Revisar conexión.");
+          } finally {
+            listaAgregarBtn.disabled = false;
+            listaAgregarBtn.textContent = originalText;
+          }
+        });
+      }
+
+      if (btnLimpiarComprados) {
+        if (isFamiliaView) {
+          btnLimpiarComprados.style.display = "none";
+        } else {
+          btnLimpiarComprados.style.display = "inline-block";
+          btnLimpiarComprados.addEventListener("click", () => {
+            const pin = window.prompt("Ingresá el PIN para limpiar la lista de comprados:");
+            if (pin !== DELETE_PIN) return;
+            const ahoraIso = new Date().toISOString();
+            try {
+              localStorage.setItem(LIMPIAR_KEY, ahoraIso);
+            } catch (e) {
+              console.warn("No se pudo guardar el estado de limpieza:", e);
+            }
+            renderListaCompras();
+          });
+        }
       }
     }
 
@@ -1402,7 +1459,7 @@ const comprados = listaComprasData.filter(it => {
           }
 
           item.addEventListener("click", () => {
-            if (isFamiliaView) return; // familia no carga el formulario
+            if (isFamiliaView) return;
             fechaInput.value     = fechaStr || hoyISO();
             turnoSelect.value    = rec.turno || "maniana";
             cuidadorSelect.value = rec.cuidador || "otro";
@@ -1423,6 +1480,7 @@ const comprados = listaComprasData.filter(it => {
     function sugerirTurnoYCuidadorSegunAhora() {
       const hoy = hoyISO();
       fechaInput.value = hoy;
+      fechaInput.max = hoy; // no permitir fechas futuras
 
       const { dow, minutes, now } = getNowInfo();
       const turnoGuess = guessTurnoFromMinutes(minutes);
@@ -1484,33 +1542,6 @@ const comprados = listaComprasData.filter(it => {
       panelLista.style.display = "";
     }
 
-  btnLimpiarComprados.style.display = "inline-block";
-  btnLimpiarComprados.addEventListener("click", async () => {
-    const LIMPIAR_KEY = "listaComprasCleanAfter";
-    
-    function getCleanAfterDate() {
-      try {
-        const v = localStorage.getItem(LIMPIAR_KEY);
-        if (!v) return null;
-        const d = new Date(v);
-        return isNaN(d.getTime()) ? null : d;
-      } catch {
-        return null;
-      }
-    }
-
-    const pin = window.prompt("Ingresá el PIN para limpiar la lista de comprados:");
-    if (pin !== DELETE_PIN) return;
-
-    try {
-      await apiComprasLimpiarComprados();   // limpia en Neon
-      await cargarListaCompras();           // vuelve a leer desde la base
-    } catch (e) {
-      console.error(e);
-      alert("No se pudo limpiar la lista de comprados.");
-    }
-  });
-
     function aplicarModoFamilia() {
       if (!isFamiliaView) return;
 
@@ -1548,18 +1579,12 @@ const comprados = listaComprasData.filter(it => {
       if (btnTurnoAhora) btnTurnoAhora.style.display = "none";
       if (listaAgregarBtn) listaAgregarBtn.style.display = "none";
 
-      // Export visible en familia
       if (exportCard)   exportCard.style.display = "block";
       if (exportDiaBtn) exportDiaBtn.style.display = "block";
     }
 
     async function init() {
       currentDateLabel.textContent = "Hoy: " + formatHoyHumano();
-
-      // No permitir fechas futuras
-      if (fechaInput) {
-        fechaInput.max = hoyISO();
-      }
 
       sugerirTurnoYCuidadorSegunAhora();
       await loadCurrentRecord();
@@ -1635,42 +1660,12 @@ const comprados = listaComprasData.filter(it => {
         activarTabTurno();
       }
 
-      setupLimpiarComprados();
+      setupListaEventos();
       aplicarModoFamilia();
       await actualizarEstadosVisuales();
-
-      // Alta de ítem de lista de compras
-      if (listaAgregarBtn) {
-        listaAgregarBtn.addEventListener("click", async () => {
-          if (isFamiliaView) return;
-          const categoria = listaCategoria.value || "otro";
-          const producto  = (listaItem.value || "").trim();
-          const cantidad  = (listaCantidad.value || "").trim() || "1";
-          if (!producto) {
-            alert("Ingresá un producto.");
-            return;
-          }
-          try {
-            await apiComprasAgregar({
-              categoria,
-              producto,
-              cantidad
-            });
-            listaItem.value = "";
-            listaCantidad.value = "";
-            await cargarListaCompras();
-          } catch (e) {
-            console.error(e);
-            alert("No se pudo agregar a la lista.");
-          }
-        });
-      }
     }
 
     document.addEventListener("DOMContentLoaded", init);
   </script>
 </body>
 </html>
-
-
-
