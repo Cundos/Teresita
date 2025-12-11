@@ -772,6 +772,20 @@
       return data.item;
     }
 
+    async function apiComprasLimpiarComprados() {
+  const res = await fetch(API_BASE + "/lista-compras-limpiar", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" }
+  });
+  if (!res.ok) throw new Error("Error HTTP al limpiar comprados");
+
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || "Error lógico al limpiar comprados");
+
+  // data.deleted suele traer cuántos borró (si lo usás más adelante)
+  return data.deleted ?? 0;
+}
+
     // --- DOM refs ---
     const currentDateLabel = document.getElementById("currentDateLabel");
     const familiaBanner = document.getElementById("familiaBanner");
@@ -1259,7 +1273,7 @@
               acc.className = "lista-accion";
               const btn = document.createElement("button");
               btn.className = "lista-btn-small";
-              btn.textContent = "✅ Comprado";
+              btn.textContent = "✅ Marcar Comprado";
               btn.addEventListener("click", async () => {
                 try {
                   await apiComprasMarcarComprado(item.id);
@@ -1473,21 +1487,19 @@
       panelLista.style.display = "";
     }
 
-    function setupLimpiarComprados() {
-      if (!btnLimpiarComprados) return;
-      if (isFamiliaView) {
-        btnLimpiarComprados.style.display = "none";
-        return;
-      }
-      btnLimpiarComprados.style.display = "inline-block";
-      btnLimpiarComprados.addEventListener("click", () => {
-        const pin = window.prompt("Ingresá el PIN para limpiar la lista de comprados:");
-        if (pin !== DELETE_PIN) return;
-        // limpieza lógica local (simple por ahora)
-        listaComprasData = listaComprasData.filter(it => it.estado !== "comprado");
-        renderListaCompras();
-      });
+  btnLimpiarComprados.style.display = "inline-block";
+  btnLimpiarComprados.addEventListener("click", async () => {
+    const pin = window.prompt("Ingresá el PIN para limpiar la lista de comprados:");
+    if (pin !== DELETE_PIN) return;
+
+    try {
+      await apiComprasLimpiarComprados();   // limpia en Neon
+      await cargarListaCompras();           // vuelve a leer desde la base
+    } catch (e) {
+      console.error(e);
+      alert("No se pudo limpiar la lista de comprados.");
     }
+  });
 
     function aplicarModoFamilia() {
       if (!isFamiliaView) return;
@@ -1649,3 +1661,4 @@
   </script>
 </body>
 </html>
+
